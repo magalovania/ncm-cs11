@@ -56,12 +56,11 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 #pb-title{font-size:19px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 #pb-artist{color:var(--sub); font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 #pb-progress{color:var(--faint); font-size:15px; font-variant-numeric:tabular-nums; white-space:nowrap}
-.ctrl{min-width:60px; height:60px; border-radius:50%; background:var(--panel2); color:var(--txt);
+.ctrl{width:60px; height:60px; border-radius:50%; background:var(--panel2); color:var(--txt);
   display:flex; align-items:center; justify-content:center; transition:.12s}
 .ctrl:active{background:var(--accent); color:#fff; transform:scale(.94)}
-.ctrl.big{min-width:84px; height:84px}
-.ctrl svg{width:30px; height:30px; fill:currentColor}
-.ctrl.big svg{width:46px; height:46px}
+.ctrl.big{width:84px; height:84px}
+.ctrl svg{width:50%; height:50%; fill:currentColor}
 .btn{height:56px; border-radius:14px; background:var(--panel2); color:var(--txt); padding:0 22px; font-size:18px;
   display:inline-flex; align-items:center; justify-content:center; gap:10px; transition:.12s}
 .btn:active{background:var(--accent); color:#fff}
