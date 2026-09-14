@@ -44,7 +44,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 
 /* player bar */
 #player-bar{position:fixed;left:var(--nav-w);right:0;bottom:0;height:84px;background:var(--panel);
-  border-top:1px solid #232938;display:flex;align-items:center;gap:14px;padding:0 18px}
+  border-top:1px solid #232938;align-items:center;gap:14px;padding:0 18px}
+#player-bar:not([hidden]){display:flex}
 #player-bar img{width:58px;height:58px;border-radius:12px;object-fit:cover;flex:none;background:#222}
 #pb-info{flex:1;min-width:0}
 #pb-title{font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -52,7 +53,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 #pb-progress{color:var(--sub);font-size:14px;white-space:nowrap}
 
 /* now playing overlay */
-#now-playing{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:50}
+#now-playing{position:fixed;inset:0;background:rgba(0,0,0,.55);align-items:center;justify-content:center;z-index:50}
+#now-playing:not([hidden]){display:flex}
 .np-bg{position:absolute;inset:0;filter:blur(40px) brightness(.4);background-size:cover;background-position:center}
 .np-card{position:relative;display:flex;gap:24px;background:var(--panel);border-radius:20px;
   padding:24px;max-width:760px;width:90%;max-height:88vh;overflow:auto}

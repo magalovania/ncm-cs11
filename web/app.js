@@ -90,13 +90,14 @@ var App = (function () {
         else if (code === 802) status.textContent = '已扫码，请在手机确认'
         else if (code === 800) { status.textContent = '二维码过期，重新生成'; clearInterval(qrTimer); startQr() }
         else if (code === 803) {
-          status.textContent = '登录成功！'
+          status.textContent = '登录成功，正在读取账户…'
           clearInterval(qrTimer)
-          // cookie 在响应里；Enhanced 也可能 Set-Cookie。从 login/status 拿 profile。
-          API.loginStatus().then(function (r) {
-            var p = r.data && r.data.profile
+          if (r.cookie) API.setCookie(r.cookie)   // 803 body.cookie = Set-Cookie 拼接，必须存
+          API.loginStatus().then(function (s) {
+            var p = s.data && s.data.profile
             if (p) { API.saveProfile(p.userId, p.nickname); updateLoginBtn(); go('playlists') }
-          })
+            else { status.textContent = '已授权但未取到账户，点左侧「歌单」重试' }
+          }).catch(function (e) { status.textContent = '读取账户失败：' + e.message })
         }
       }).catch(function () {})
     }, 2000)

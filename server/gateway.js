@@ -24,6 +24,7 @@ const MIME = {
 
 function proxy(req, res) {
   const target = req.url.replace(/^\/api/, '') || '/'
+  const isLogin = target.indexOf('/login/') === 0
   const opts = {
     hostname: '127.0.0.1',
     port: API_PORT,
@@ -32,8 +33,33 @@ function proxy(req, res) {
     headers: Object.assign({}, req.headers, { host: '127.0.0.1:' + API_PORT }),
   }
   const up = http.request(opts, r => {
-    res.writeHead(r.statusCode, r.headers)
-    r.pipe(res)
+    if (!isLogin) {
+      res.writeHead(r.statusCode, r.headers)
+      return r.pipe(res)
+    }
+    // login endpoints: inject the cookie string into the JSON body from Set-Cookie
+    // headers, so the web client can store it explicitly and replay it via ?cookie=.
+    // Needed on the car (http, non-localhost) where Secure browser cookies won't persist.
+    const setCookies = r.headers['set-cookie'] || []
+    const chunks = []
+    r.on('data', c => chunks.push(c))
+    r.on('end', () => {
+      let body = Buffer.concat(chunks)
+      const ct = r.headers['content-type'] || ''
+      if (ct.indexOf('json') >= 0) {
+        try {
+          const json = JSON.parse(body.toString('utf8'))
+          const ck = setCookies.map(h => h.split(';')[0].trim()).filter(Boolean).join('; ')
+          if (ck && !json.cookie) json.cookie = ck
+          body = Buffer.from(JSON.stringify(json), 'utf8')
+        } catch (e) {}
+      }
+      const h = Object.assign({}, r.headers)
+      delete h['set-cookie']
+      h['content-length'] = String(body.length)
+      res.writeHead(r.statusCode, h)
+      res.end(body)
+    })
   })
   up.on('error', e => {
     res.writeHead(502, { 'content-type': 'text/plain;charset=utf-8' })
@@ -55,7 +81,10 @@ function serveStatic(req, res) {
       res.writeHead(404)
       return res.end('not found: ' + p)
     }
-    res.writeHead(200, { 'content-type': MIME[path.extname(fp).toLowerCase()] || 'application/octet-stream' })
+    const ext = path.extname(fp).toLowerCase()
+    const headers = { 'content-type': MIME[ext] || 'application/octet-stream' }
+    if (ext === '.html' || ext === '.js' || ext === '.css') headers['cache-control'] = 'no-store'
+    res.writeHead(200, headers)
     res.end(data)
   })
 }
