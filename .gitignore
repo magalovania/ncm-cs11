@@ -28,6 +28,7 @@ session/
 # --- Node ---
 node_modules/
 server/api/
+_deploy/
 
 # --- Android ---
 android/.gradle/
