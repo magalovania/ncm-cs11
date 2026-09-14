@@ -38,3 +38,5 @@ android/local.properties
 local.properties
 *.apk
 *.aab
+folder.ico
+icon_master.png
