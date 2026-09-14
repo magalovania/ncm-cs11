@@ -467,7 +467,7 @@ var Lrc = (function () {
       var m, base = 0, tags = []
       re.lastIndex = 0
       while ((m = re.exec(line))) { tags.push(parseInt(m[1], 10) * 60 + parseFloat(m[2])) }
-      var txt = line.replace(re, '')
+      var txt = line.replace(re, '').replace(/[‘’＇]/g, "'").replace(/[“”＂]/g, '"')
       tags.forEach(function (t) { out.push({ t: t, text: txt }) })
     })
     out.sort(function (a, b) { return a.t - b.t })
