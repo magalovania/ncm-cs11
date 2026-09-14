@@ -230,6 +230,8 @@ var App = (function () {
     playTrack(state.queue[i])
   }
 
+  function notifyMedia(t) { if (window.Android) try { window.Android.setMedia(trackName(t), trackArtist(t), trackPic(t)) } catch (e) {} }
+
   function playTrack(t) {
     if (!t || !t.id) return
     showBarLoading(t)
@@ -240,6 +242,7 @@ var App = (function () {
       audio.src = url
       audio.play().then(function () {}).catch(function () {})
       updateBar(t)
+      notifyMedia(t)
       loadLyric(t.id)
     }).catch(function () { next() })
   }
@@ -322,10 +325,12 @@ var App = (function () {
     audio.addEventListener('play', function () {
       document.getElementById('pb-play').textContent = '⏸'
       var np = document.getElementById('np-play'); if (np) np.textContent = '⏸'
+      if (window.Android) try { window.Android.setPlaying(true) } catch (e) {}
     })
     audio.addEventListener('pause', function () {
       document.getElementById('pb-play').textContent = '▶'
       var np = document.getElementById('np-play'); if (np) np.textContent = '▶'
+      if (window.Android) try { window.Android.setPlaying(false) } catch (e) {}
     })
     audio.addEventListener('ended', next)
     audio.addEventListener('timeupdate', function () {
