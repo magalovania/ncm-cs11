@@ -1,0 +1,14 @@
+.git
+.gitignore
+docs
+android
+CLAUDE.md
+.claude
+node_modules
+server/api
+server/api/node_modules
+*.apk
+*.aab
+*.docx
+*.xlsx
+*.csv

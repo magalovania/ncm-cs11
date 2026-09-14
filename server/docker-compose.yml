@@ -1,0 +1,22 @@
+services:
+  # NeteaseCloudMusicApi Enhanced — official image (author's). No build needed.
+  # To build from source instead: replace `image:` with `build: { context: .., dockerfile: server/Dockerfile.api }`
+  api:
+    image: moefurina/ncm-api:latest
+    environment:
+      ENABLE_GENERAL_UNBLOCK: "true"   # 全局解灰
+    restart: unless-stopped
+
+  # Gateway: serves web UI + proxies /api to the api service (same-origin, no CORS).
+  web:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile.web
+    ports:
+      - "8080:8080"
+    environment:
+      API_HOST: "api"
+      API_PORT: "3000"
+    depends_on:
+      - api
+    restart: unless-stopped

@@ -8,6 +8,7 @@ const path = require('path')
 
 const WEB_ROOT = path.resolve(__dirname, '..', 'web')
 const API_PORT = Number(process.env.API_PORT) || 3000
+const API_HOST = process.env.API_HOST || '127.0.0.1'
 const PORT = Number(process.env.PORT) || 8080
 
 const MIME = {
@@ -26,11 +27,11 @@ function proxy(req, res) {
   const target = req.url.replace(/^\/api/, '') || '/'
   const isLogin = target.indexOf('/login/') === 0
   const opts = {
-    hostname: '127.0.0.1',
+    hostname: API_HOST,
     port: API_PORT,
     path: target,
     method: req.method,
-    headers: Object.assign({}, req.headers, { host: '127.0.0.1:' + API_PORT }),
+    headers: Object.assign({}, req.headers, { host: API_HOST + ':' + API_PORT }),
   }
   const up = http.request(opts, r => {
     if (!isLogin) {

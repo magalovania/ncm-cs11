@@ -1,0 +1,8 @@
+# Gateway: serves the web UI + proxies /api to the api service. Zero deps (Node http).
+FROM node:20-alpine
+WORKDIR /app
+COPY server/gateway.js ./gateway.js
+COPY web/ ./web/
+ENV PORT=8080 API_HOST=api API_PORT=3000
+EXPOSE 8080
+CMD ["node","gateway.js"]

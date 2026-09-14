@@ -1,62 +1,111 @@
 package com.ncmcs11;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.WindowManager;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 /**
- * Full-screen WebView shell that loads the web UI from the gateway.
- * Owns nothing playback-related — that lives in {@link MusicService} so 方控 and the
- * persistent notification (仪表盘 display) survive activity recreation.
+ * Full-screen WebView shell. Loads the server URL from SharedPreferences (so the car
+ * can be repointed at a VPS without rebuilding). The native playback layer lives in
+ * {@link MusicService}. Bridge (window.Android) handles bidirectional comms with the web UI.
  */
 public class MainActivity extends Activity {
   private static final String TAG = "NCMcs11";
-  // Home test: the gateway on the dev PC. For driving-anywhere, repoint to the VPS URL.
-  private static final String START_URL = "http://192.168.31.187:8080";
+  private static final String PREF = "ncmcs11";
+  private static final String KEY_URL = "server_url";
+  private static final String DEFAULT_URL = "http://192.168.31.187:8080";
 
   private WebView web;
+  private SharedPreferences prefs;
+  private boolean errorShown = false;
   private static volatile MainActivity instance;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     instance = this;
+    prefs = getSharedPreferences(PREF, Context.MODE_PRIVATE);
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     setContentView(R.layout.activity_main);
 
     web = findViewById(R.id.web);
     WebSettings ws = web.getSettings();
     ws.setJavaScriptEnabled(true);
-    ws.setDomStorageEnabled(true);                  // localStorage (cookie/quality/uid)
-    ws.setMediaPlaybackRequiresUserGesture(false);  // autoplay allowed
+    ws.setDomStorageEnabled(true);                  // localStorage
+    ws.setMediaPlaybackRequiresUserGesture(false);  // autoplay
     ws.setJavaScriptCanOpenWindowsAutomatically(true);
-    ws.setCacheMode(WebSettings.LOAD_NO_CACHE);     // dev: always fresh UI
-    web.setWebViewClient(new WebViewClient());
+    ws.setCacheMode(WebSettings.LOAD_NO_CACHE);      // dev: always fresh UI
+    web.setWebViewClient(new WebViewClient() {
+      @Override public void onReceivedError(WebView v, int code, String desc, String url) { fail(); }
+      @Override public void onReceivedError(WebView v, WebResourceRequest req, WebResourceError err) {
+        if (req.isForMainFrame()) fail();
+      }
+    });
     web.setWebChromeClient(new WebChromeClient());
     web.addJavascriptInterface(new Bridge(this), "Android");
-    web.loadUrl(START_URL);
+    loadSaved();
   }
 
-  /** Run JS in the WebView on the UI thread. */
-  void evalJs(String js) {
-    runOnUiThread(new Runnable() {
-      @Override public void run() { web.evaluateJavascript(js, null); }
-    });
+  private void loadSaved() { errorShown = false; web.loadUrl(currentUrl()); }
+
+  String currentUrl() { return prefs.getString(KEY_URL, DEFAULT_URL); }
+
+  private void fail() {
+    if (errorShown) return;
+    errorShown = true;
+    runOnUiThread(new Runnable() { @Override public void run() { showServerDialog(true); } });
+  }
+
+  /** Native dialog to edit the server URL. Shown on load failure, or via window.Android.openServerDialog(). */
+  void showServerDialog(final boolean fromError) {
+    final EditText et = new EditText(this);
+    et.setText(currentUrl());
+    et.setSelection(et.getText().length());
+    LinearLayout box = new LinearLayout(this);
+    box.setPadding(60, 24, 60, 24);
+    box.addView(et, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+    new AlertDialog.Builder(this)
+      .setTitle("服务器地址")
+      .setMessage(fromError ? "连接失败，请确认后端地址" : "车机网易云后端地址")
+      .setView(box)
+      .setPositiveButton("保存并连接", new DialogInterface.OnClickListener() {
+        @Override public void onClick(DialogInterface d, int w) { setServer(et.getText().toString().trim()); }
+      })
+      .setNegativeButton("取消", null)
+      .show();
+  }
+
+  void setServer(String url) {
+    if (url == null || url.isEmpty()) return;
+    if (!url.startsWith("http")) url = "http://" + url;
+    prefs.edit().putString(KEY_URL, url).apply();
+    Toast.makeText(this, "连接 " + url, Toast.LENGTH_SHORT).show();
+    loadSaved();
+  }
+
+  void evalJs(final String js) {
+    runOnUiThread(new Runnable() { @Override public void run() { web.evaluateJavascript(js, null); } });
   }
 
   static MainActivity getInstance() { return instance; }
 
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
-    // Fallback for steering-wheel keys delivered as physical key events to the
-    // foreground app. (The MediaSession in MusicService handles broadcast-style
-    // media buttons; only one of the two paths fires per key delivery.)
     String k = mediaKey(keyCode);
     if (k != null) {
       evalJs("window.__bridge&&window.__bridge.onMediaKey('" + k + "')");
@@ -70,7 +119,7 @@ public class MainActivity extends Activity {
     switch (keyCode) {
       case KeyEvent.KEYCODE_MEDIA_PLAY: return "play";
       case KeyEvent.KEYCODE_MEDIA_PAUSE: return "pause";
-      case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: return "play";   // web toggle() handles the flip
+      case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: return "play";
       case KeyEvent.KEYCODE_MEDIA_NEXT: return "next";
       case KeyEvent.KEYCODE_MEDIA_PREVIOUS: return "prev";
       case KeyEvent.KEYCODE_MEDIA_STOP: return "pause";
@@ -79,8 +128,5 @@ public class MainActivity extends Activity {
   }
 
   @Override protected void onResume() { super.onResume(); instance = this; }
-  @Override protected void onDestroy() {
-    super.onDestroy();
-    if (instance == this) instance = null;
-  }
+  @Override protected void onDestroy() { super.onDestroy(); if (instance == this) instance = null; }
 }

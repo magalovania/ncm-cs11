@@ -17,6 +17,7 @@ var API = (function () {
     return new Promise(function (resolve, reject) {
       var parts = []
       var p = params || {}
+      p._t = String(Date.now())   // cache-buster: API caches GET for 2min; QR login must not get a stale key
       var ck = getCookie()
       if (ck) p.cookie = ck
       Object.keys(p).forEach(function (k) {

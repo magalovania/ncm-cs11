@@ -370,6 +370,11 @@ var App = (function () {
   function renderSettings() {
     var c = document.getElementById('content'); empty(c)
     c.appendChild(el('<h2>设置</h2>'))
+    var srvRow = el('<div class="set-row"><div>服务器地址</div><div style="flex:1;text-align:right;color:var(--sub);margin-left:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + location.origin + '</div></div>')
+    c.appendChild(srvRow)
+    var srvBtn = el('<button class="ctrl" style="margin:0 0 16px">修改服务器地址</button>')
+    c.appendChild(srvBtn)
+    srvBtn.onclick = function () { if (window.Android && window.Android.openServerDialog) window.Android.openServerDialog() }
     var qRow = el('<div class="set-row"><div>音质</div><select id="q-sel">' +
       '<option value="standard">标准</option><option value="higher">较高</option>' +
       '<option value="exhigh">极高</option><option value="lossless">无损 (VIP)</option>' +

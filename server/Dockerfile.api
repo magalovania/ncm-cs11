@@ -1,0 +1,9 @@
+# NeteaseCloudMusicApi Enhanced — cloned at build time, prod deps only.
+FROM node:20-alpine
+RUN apk add --no-cache git
+WORKDIR /app
+RUN git clone --depth 1 https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced /app \
+ && npm install --omit=dev --ignore-scripts --registry=https://registry.npmmirror.com
+ENV NODE_ENV=production
+EXPOSE 3000
+CMD ["node","app.js"]

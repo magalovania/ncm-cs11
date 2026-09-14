@@ -4,9 +4,9 @@ import android.util.Log;
 import android.webkit.JavascriptInterface;
 
 /**
- * Exposed to the web UI as window.Android. The web app calls these to push playback
- * state up to the native MediaSession + foreground notification (方控 routing +
- * 仪表盘 display). The native side calls back into the web via window.__bridge.
+ * Exposed to the web UI as window.Android. The web app pushes playback state and
+ * server-URL changes up here; the native side calls back into the web via
+ * window.__bridge.onMediaKey(...) for 方控.
  */
 public class Bridge {
   private static final String TAG = "NCMcs11";
@@ -22,6 +22,16 @@ public class Bridge {
   @JavascriptInterface
   public void setPlaying(boolean playing) {
     MusicService.updateState(activity.getApplicationContext(), playing);
+  }
+
+  @JavascriptInterface
+  public void setServer(final String url) {
+    activity.runOnUiThread(new Runnable() { @Override public void run() { activity.setServer(url); } });
+  }
+
+  @JavascriptInterface
+  public void openServerDialog() {
+    activity.runOnUiThread(new Runnable() { @Override public void run() { activity.showServerDialog(false); } });
   }
 
   @JavascriptInterface
