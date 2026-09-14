@@ -68,7 +68,7 @@ var App = (function () {
       img.style.display = 'none'; tip.style.display = 'none'
       API.loginStatus().then(function (r) {
         var p = r.data && r.data.profile
-        if (p) { API.saveProfile(p.userId, p.nickname); updateLoginBtn(); go('playlists') }
+        if (p) { API.saveProfile(p.userId, p.nickname, p.avatarUrl); updateLoginBtn(); go('playlists') }
         else { status.textContent = '凭证已失效，请重新扫码'; API.clearAuth(); startQr() }
       }).catch(function () { status.textContent = '获取信息失败，请重试' })
       return
@@ -105,7 +105,7 @@ var App = (function () {
           if (r.cookie) API.setCookie(r.cookie)   // 803 body.cookie = Set-Cookie 拼接，必须存
           API.loginStatus().then(function (s) {
             var p = s.data && s.data.profile
-            if (p) { API.saveProfile(p.userId, p.nickname); updateLoginBtn(); go('playlists') }
+            if (p) { API.saveProfile(p.userId, p.nickname, p.avatarUrl); updateLoginBtn(); go('playlists') }
             else { status.textContent = '已授权但未取到账户，点左侧「歌单」重试' }
           }).catch(function (e) { status.textContent = '读取账户失败：' + e.message })
         }
@@ -115,7 +115,11 @@ var App = (function () {
 
   function updateLoginBtn() {
     var b = document.getElementById('nav-login')
-    b.textContent = API.name() ? API.name() : (API.isLogged() ? '已登录' : '未登录')
+    if (API.isLogged() && API.avatar()) {
+      b.innerHTML = '<img src="' + API.avatar() + '" class="nav-avatar" alt="">'
+    } else {
+      b.textContent = API.isLogged() ? '已登录' : '未登录'
+    }
   }
 
   // ---------- playlists ----------
@@ -248,8 +252,8 @@ var App = (function () {
       if (s && s.al && s.al.picUrl) {
         t.al = s.al
         if (cur() === t) {
-          var cv = document.getElementById('pb-cover'); if (cv) cv.src = trackPic(t)
-          var ncv = document.getElementById('np-cover'); if (ncv) ncv.src = trackPic(t)
+          var cv = document.getElementById('pb-cover'); if (cv) { cv.src = trackPic(t); cv.style.visibility = 'visible' }
+          var ncv = document.getElementById('np-cover'); if (ncv) { ncv.src = trackPic(t); ncv.style.visibility = 'visible' }
           notifyMedia(t)
         }
       }
@@ -287,18 +291,24 @@ var App = (function () {
   function toggle() { if (audio.paused) audio.play(); else audio.pause() }
 
   // ---------- UI sync ----------
+  function setBarCover(t) {
+    var cv = document.getElementById('pb-cover'); if (!cv) return
+    var pic = trackPic(t)
+    if (pic) { cv.src = pic; cv.style.visibility = 'visible' }
+    else { cv.removeAttribute('src'); cv.style.visibility = 'hidden' }
+  }
   function showBarLoading(t) {
     var bar = document.getElementById('player-bar'); bar.hidden = false
     document.getElementById('pb-title').textContent = trackName(t)
     document.getElementById('pb-artist').textContent = trackArtist(t)
+    setBarCover(t)
   }
   function updateBar(t) {
     var bar = document.getElementById('player-bar'); bar.hidden = false
     if (!t) { document.getElementById('pb-title').textContent = '-'; return }
     document.getElementById('pb-title').textContent = trackName(t)
     document.getElementById('pb-artist').textContent = trackArtist(t)
-    var cv = document.getElementById('pb-cover'); cv.src = trackPic(t) || ''
-    document.getElementById('pb-play').textContent = '▶'
+    setBarCover(t)
   }
 
   function loadLyric(id) {
@@ -324,7 +334,8 @@ var App = (function () {
     if (!t) { c.appendChild(el('<h2>当前播放</h2>')); c.appendChild(el('<div class="empty">没有正在播放的曲目，去歌单点一首吧</div>')); return }
     var view = el('<div class="np-view"><div class="np-left"><img id="np-cover" alt=""><div class="np-times"><span id="np-cur">0:00</span><span id="np-dur">0:00</span></div><input id="np-seek" type="range" min="0" max="1000" value="0"><div class="np-controls"><button id="np-prev" class="ctrl big">⏮</button><button id="np-play" class="ctrl big">▶</button><button id="np-next" class="ctrl big">⏭</button></div></div><div class="np-right"><div class="np-head"><div id="np-title"></div><div id="np-artist"></div></div><div id="np-lyric" class="np-lyric"></div></div></div>')
     c.appendChild(view)
-    document.getElementById('np-cover').src = trackPic(t) || ''
+    var ncv = document.getElementById('np-cover'); var npic = trackPic(t)
+    if (npic) { ncv.src = npic; ncv.style.visibility = 'visible' } else { ncv.removeAttribute('src'); ncv.style.visibility = 'hidden' }
     document.getElementById('np-title').textContent = trackName(t)
     document.getElementById('np-artist').textContent = trackArtist(t)
     setPlayIcon(document.getElementById('np-play'), !audio.paused)
@@ -424,7 +435,7 @@ var App = (function () {
     document.getElementById('set-uid').textContent = 'UID: ' + API.uid()
     API.loginStatus().then(function (r) {
       var p = r.data && r.data.profile
-      if (p) { API.saveProfile(p.userId, p.nickname); document.getElementById('set-name').textContent = p.nickname }
+      if (p) { API.saveProfile(p.userId, p.nickname, p.avatarUrl); document.getElementById('set-name').textContent = p.nickname }
       var img = acct.querySelector('img'); img.src = p && p.avatarUrl ? API.httpsPic(p.avatarUrl) : ''
     })
     document.getElementById('logout').onclick = function () { API.clearAuth(); updateLoginBtn(); go('login') }
@@ -450,7 +461,8 @@ var App = (function () {
     if (API.isLogged()) {
       API.loginStatus().then(function (r) {
         var p = r.data && r.data.profile
-        if (p) API.saveProfile(p.userId, p.nickname)
+        if (p) API.saveProfile(p.userId, p.nickname, p.avatarUrl)
+        updateLoginBtn()
         go(p ? 'playlists' : 'login')
       }).catch(function () { go('login') })
     } else go('login')

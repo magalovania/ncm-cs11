@@ -47,7 +47,7 @@ var API = (function () {
     call: call,
     getCookie: getCookie,
     setCookie: setCookie,
-    clearAuth: function () { setCookie(''); store('ncm_uid', ''); store('ncm_name', '') },
+    clearAuth: function () { setCookie(''); store('ncm_uid', ''); store('ncm_name', ''); store('ncm_avatar', '') },
     httpsPic: httpsPic,
 
     // ---- login (QR) ----
@@ -79,6 +79,7 @@ var API = (function () {
     isLogged: function () { return !!getCookie() },
     uid: function () { return store('ncm_uid') || '' },
     name: function () { return store('ncm_name') || '' },
-    saveProfile: function (uid, name) { store('ncm_uid', String(uid || '')); store('ncm_name', name || '') },
+    saveProfile: function (uid, name, avatar) { store('ncm_uid', String(uid || '')); store('ncm_name', name || ''); store('ncm_avatar', avatar ? httpsPic(avatar) : '') },
+    avatar: function () { return store('ncm_avatar') || '' },
   }
 })()
