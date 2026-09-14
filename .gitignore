@@ -1,0 +1,39 @@
+# --- Claude Code dev workspace (LOCAL ONLY — never push) ---
+CLAUDE.md
+.claude/
+docs/
+
+# --- IDE / OS noise ---
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Secrets / credentials ---
+.env
+.env.*
+proxy/
+
+# --- User data / sessions ---
+userdata/
+session/
+
+# --- Personal documents and exports ---
+*_article
+*.docx
+*.doc
+*.xlsx
+*.csv
+
+# --- Node ---
+node_modules/
+server/api/
+
+# --- Android ---
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+local.properties
+*.apk
+*.aab

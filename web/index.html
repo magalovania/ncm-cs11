@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>车机网易云</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <aside id="nav">
+    <div class="nav-logo">云</div>
+    <button class="nav-btn active" data-view="playlists" title="我的歌单">歌单</button>
+    <button class="nav-btn" data-view="fm" title="私人FM">FM</button>
+    <button class="nav-btn" data-view="search" title="搜索">搜索</button>
+    <button class="nav-btn" data-view="settings" title="设置">设置</button>
+    <button class="nav-btn nav-login" data-view="login" id="nav-login" title="登录">未登录</button>
+  </aside>
+  <main id="content"></main>
+</div>
+
+<div id="player-bar" hidden>
+  <img id="pb-cover" alt="" src="">
+  <div id="pb-info">
+    <div id="pb-title">-</div>
+    <div id="pb-artist">-</div>
+  </div>
+  <div id="pb-progress"><span id="pb-cur">0:00</span> / <span id="pb-dur">0:00</span></div>
+  <button id="pb-prev" class="ctrl">⏮</button>
+  <button id="pb-play" class="ctrl">▶</button>
+  <button id="pb-next" class="ctrl">⏭</button>
+</div>
+
+<div id="now-playing" hidden>
+  <div class="np-bg" id="np-bg"></div>
+  <div class="np-card">
+    <img id="np-cover" alt="" src="">
+    <div class="np-meta">
+      <div id="np-title">-</div>
+      <div id="np-artist">-</div>
+      <input id="np-seek" type="range" min="0" max="1000" value="0">
+      <div class="np-times"><span id="np-cur">0:00</span><span id="np-dur">0:00</span></div>
+      <div class="np-controls">
+        <button id="np-prev" class="ctrl big">⏮</button>
+        <button id="np-play" class="ctrl big">▶</button>
+        <button id="np-next" class="ctrl big">⏭</button>
+      </div>
+      <div id="np-lyric" class="np-lyric"></div>
+    </div>
+    <button id="np-close" class="ctrl">✕</button>
+  </div>
+</div>
+
+<audio id="audio" preload="auto"></audio>
+<script src="api.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
