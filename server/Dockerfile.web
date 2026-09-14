@@ -2,7 +2,7 @@
 FROM node:20-alpine
 WORKDIR /app
 COPY server/gateway.js ./gateway.js
-COPY web/ ./web/
+COPY web/ /web/
 ENV PORT=8080 API_HOST=api API_PORT=3000
 EXPOSE 8080
 CMD ["node","gateway.js"]
