@@ -69,6 +69,7 @@ var API = (function () {
     },
     lyric: function (id) { return call('lyric', { id: id }) },
     personalFm: function () { return call('personal_fm') },
+    topPlaylist: function (offset, limit) { return call('top/playlist', { offset: offset || 0, limit: limit || 12 }) },
     likelist: function (uid) { return call('likelist', { uid: uid }) },
     like: function (id, t) { return call('like', { id: id, t: t ? 'true' : 'false' }) },
     search: function (kw, offset, limit) {
