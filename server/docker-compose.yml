@@ -5,6 +5,7 @@ services:
     image: moefurina/ncm-api:latest
     environment:
       ENABLE_GENERAL_UNBLOCK: "true"   # 全局解灰
+      ENABLE_RANDOM_CN_IP: "true"      # 海外服务器伪造国内 IP，规避网易 460 cheating
     restart: unless-stopped
 
   # Gateway: serves web UI + proxies /api to the api service (same-origin, no CORS).

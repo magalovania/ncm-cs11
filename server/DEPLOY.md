@@ -20,6 +20,10 @@
 - 想更透明（自己审代码构建）：把 docker-compose.yml 里 `api` 服务的 `image:` 改成
   `build: { context: .., dockerfile: server/Dockerfile.api }`，Dockerfile.api 会 git clone 源码自建。
 
+## 460 cheating（海外部署必看）
+网易对「非中国大陆 IP」的请求返回 `460 cheating`。本地（国内 IP）没事；**部署到 GCP 美区 / 港 VPS 必撞**，取歌登录全挂。
+解法：docker-compose 已给 api 开 `ENABLE_RANDOM_CN_IP=true`，自动给每个请求套随机国内 IP（设 `X-Real-IP`），网易当作国内放行。无需手动传 `?realIP=`。
+
 ## 流量 & 侵权
 - **音频直走网易云 CDN**（m801.music.126.net），不经服务器；VPS 只扛 Web UI(~18KB)+API JSON(每次几 KB)，1G/月用不完。
 - 单用户私用风险低；海外 VPS 无 ICP、不易被发现，规避国内公开服务被网易投诉下架的风险。
