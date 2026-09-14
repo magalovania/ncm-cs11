@@ -13,6 +13,14 @@ var App = (function () {
     quality: localStorage.getItem('ncm_quality') || 'exhigh',
   }
 
+  var ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>',
+    prev: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM9.5 12l8.5 6V6z"/></svg>',
+    next: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6h2v12H16z"/></svg>'
+  }
+  function setPlayIcon(el, playing) { if (el) el.innerHTML = playing ? ICON.pause : ICON.play }
+
   // ---------- utils ----------
   function fmt(s) { s = s || 0; var m = Math.floor(s / 60), r = Math.floor(s % 60); return m + ':' + (r < 10 ? '0' : '') + r }
   function el(html) { var d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild }
@@ -24,6 +32,7 @@ var App = (function () {
   function trackName(t) { return t.name || (t.al && t.al.name) || '-' }
   function trackPic(t) {
     var p = t.al && t.al.picUrl; if (p) return API.httpsPic(p)
+    p = t.album && t.album.picUrl; if (p) return API.httpsPic(p)
     p = t.picUrl; return p ? API.httpsPic(p) : ''
   }
 
@@ -35,7 +44,8 @@ var App = (function () {
     })
     if (view === 'login') return renderLogin()
     if (!API.isLogged()) { return renderLogin() }
-    if (view === 'playlists') renderPlaylists()
+    if (view === 'nowplaying') renderNowPlaying()
+    else if (view === 'playlists') renderPlaylists()
     else if (view === 'fm') renderFm()
     else if (view === 'search') renderSearch()
     else if (view === 'settings') renderSettings()
@@ -142,7 +152,7 @@ var App = (function () {
     API.playlistTracks(id).then(function (r) {
       var songs = r.songs || []
       var load = document.getElementById('pd-load'); if (load) load.remove()
-      var playAll = el('<button class="ctrl" style="margin-bottom:12px">▶ 播放全部</button>')
+      var playAll = el('<button class="btn" style="margin-bottom:12px">' + ICON.play + ' 播放全部</button>')
       c.appendChild(playAll)
       var list = el('<div class="list"></div>')
       songs.forEach(function (s, i) {
@@ -232,6 +242,20 @@ var App = (function () {
 
   function notifyMedia(t) { if (window.Android) try { window.Android.setMedia(trackName(t), trackArtist(t), trackPic(t)) } catch (e) {} }
 
+  function ensureCover(t) {
+    API.songDetail(t.id).then(function (r) {
+      var s = r.songs && r.songs[0]
+      if (s && s.al && s.al.picUrl) {
+        t.al = s.al
+        if (cur() === t) {
+          var cv = document.getElementById('pb-cover'); if (cv) cv.src = trackPic(t)
+          var ncv = document.getElementById('np-cover'); if (ncv) ncv.src = trackPic(t)
+          notifyMedia(t)
+        }
+      }
+    }).catch(function () {})
+  }
+
   function playTrack(t) {
     if (!t || !t.id) return
     showBarLoading(t)
@@ -243,7 +267,8 @@ var App = (function () {
       audio.play().then(function () {}).catch(function () {})
       updateBar(t)
       notifyMedia(t)
-      loadLyric(t.id)
+      if (state.view === 'nowplaying') renderNowPlaying()   // 切歌时刷新当前播放视图（标题/封面/歌词）
+      if (!trackPic(t)) ensureCover(t)   // 搜索/FM 等接口不带封面，按需补取
     }).catch(function () { next() })
   }
 
@@ -292,16 +317,31 @@ var App = (function () {
     }).catch(function () {})
   }
 
-  // ---------- now playing overlay ----------
-  function openNowPlaying() {
-    var t = cur(); if (!t) return
-    var ov = document.getElementById('now-playing'); ov.hidden = false
+  // ---------- now playing view (routed, fills the content area) ----------
+  function renderNowPlaying() {
+    var c = document.getElementById('content'); empty(c)
+    var t = cur()
+    if (!t) { c.appendChild(el('<h2>当前播放</h2>')); c.appendChild(el('<div class="empty">没有正在播放的曲目，去歌单点一首吧</div>')); return }
+    var view = el('<div class="np-view"><div class="np-left"><img id="np-cover" alt=""><div class="np-times"><span id="np-cur">0:00</span><span id="np-dur">0:00</span></div><input id="np-seek" type="range" min="0" max="1000" value="0"><div class="np-controls"><button id="np-prev" class="ctrl big">⏮</button><button id="np-play" class="ctrl big">▶</button><button id="np-next" class="ctrl big">⏭</button></div></div><div class="np-right"><div class="np-head"><div id="np-title"></div><div id="np-artist"></div></div><div id="np-lyric" class="np-lyric"></div></div></div>')
+    c.appendChild(view)
+    document.getElementById('np-cover').src = trackPic(t) || ''
     document.getElementById('np-title').textContent = trackName(t)
     document.getElementById('np-artist').textContent = trackArtist(t)
-    var cv = document.getElementById('np-cover'); cv.src = trackPic(t) || ''
-    document.getElementById('np-bg').style.backgroundImage = 'url("' + (trackPic(t) || '') + '")'
+    setPlayIcon(document.getElementById('np-play'), !audio.paused)
+    document.getElementById('np-prev').innerHTML = ICON.prev
+    document.getElementById('np-next').innerHTML = ICON.next
+    if (audio.duration) {
+      document.getElementById('np-seek').value = String((audio.currentTime / audio.duration) * 1000)
+      document.getElementById('np-cur').textContent = fmt(audio.currentTime)
+      document.getElementById('np-dur').textContent = fmt(audio.duration)
+    }
+    document.getElementById('np-play').onclick = toggle
+    document.getElementById('np-next').onclick = next
+    document.getElementById('np-prev').onclick = prev
+    document.getElementById('np-seek').oninput = function (e) { if (audio.duration) audio.currentTime = (e.target.value / 1000) * audio.duration }
+    loadLyric(t.id)
+    syncLyric()
   }
-  function closeNowPlaying() { document.getElementById('now-playing').hidden = true }
 
   // ---------- bindings ----------
   function bind() {
@@ -311,25 +351,17 @@ var App = (function () {
     document.getElementById('pb-play').onclick = toggle
     document.getElementById('pb-next').onclick = next
     document.getElementById('pb-prev').onclick = prev
-    document.getElementById('pb-info').onclick = openNowPlaying
-    document.getElementById('pb-cover').onclick = openNowPlaying
-
-    document.getElementById('np-play').onclick = toggle
-    document.getElementById('np-next').onclick = next
-    document.getElementById('np-prev').onclick = prev
-    document.getElementById('np-close').onclick = closeNowPlaying
-    document.getElementById('np-seek').oninput = function (e) {
-      if (audio.duration) audio.currentTime = (e.target.value / 1000) * audio.duration
-    }
+    document.getElementById('pb-info').onclick = function () { go('nowplaying') }
+    document.getElementById('pb-cover').onclick = function () { go('nowplaying') }
 
     audio.addEventListener('play', function () {
-      document.getElementById('pb-play').textContent = '⏸'
-      var np = document.getElementById('np-play'); if (np) np.textContent = '⏸'
+      setPlayIcon(document.getElementById('pb-play'), true)
+      var np = document.getElementById('np-play'); setPlayIcon(np, true)
       if (window.Android) try { window.Android.setPlaying(true) } catch (e) {}
     })
     audio.addEventListener('pause', function () {
-      document.getElementById('pb-play').textContent = '▶'
-      var np = document.getElementById('np-play'); if (np) np.textContent = '▶'
+      setPlayIcon(document.getElementById('pb-play'), false)
+      var np = document.getElementById('np-play'); setPlayIcon(np, false)
       if (window.Android) try { window.Android.setPlaying(false) } catch (e) {}
     })
     audio.addEventListener('ended', next)
@@ -374,7 +406,7 @@ var App = (function () {
     c.appendChild(el('<h2>设置</h2>'))
     var srvRow = el('<div class="set-row"><div>服务器地址</div><div style="flex:1;text-align:right;color:var(--sub);margin-left:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + location.origin + '</div></div>')
     c.appendChild(srvRow)
-    var srvBtn = el('<button class="ctrl" style="margin:0 0 16px">修改服务器地址</button>')
+    var srvBtn = el('<button class="btn" style="margin:0 0 16px">修改服务器地址</button>')
     c.appendChild(srvBtn)
     srvBtn.onclick = function () { if (window.Android && window.Android.openServerDialog) window.Android.openServerDialog() }
     var qRow = el('<div class="set-row"><div>音质</div><select id="q-sel">' +
@@ -386,7 +418,7 @@ var App = (function () {
     sel.onchange = function () { state.quality = sel.value; localStorage.setItem('ncm_quality', sel.value) }
     var acct = el('<div class="set-row"><div class="acct"><img src=""></div>' +
       '<div><div id="set-name"></div><div id="set-uid" class="muted"></div></div>' +
-      '<button class="ctrl" id="logout">退出登录</button></div>')
+      '<button class="btn" id="logout">退出登录</button></div>')
     c.appendChild(acct)
     document.getElementById('set-name').textContent = API.name() || '已登录'
     document.getElementById('set-uid').textContent = 'UID: ' + API.uid()

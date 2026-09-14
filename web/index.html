@@ -9,7 +9,8 @@
 <body>
 <div id="app">
   <aside id="nav">
-    <div class="nav-logo">云</div>
+    <div class="nav-logo"><img src="logo.png" alt=""></div>
+    <button class="nav-btn" data-view="nowplaying" title="当前播放">当前播放</button>
     <button class="nav-btn active" data-view="playlists" title="我的歌单">歌单</button>
     <button class="nav-btn" data-view="fm" title="私人FM">FM</button>
     <button class="nav-btn" data-view="search" title="搜索">搜索</button>
@@ -27,29 +28,9 @@
     <div id="pb-artist">-</div>
   </div>
   <div id="pb-progress"><span id="pb-cur">0:00</span> / <span id="pb-dur">0:00</span></div>
-  <button id="pb-prev" class="ctrl">⏮</button>
-  <button id="pb-play" class="ctrl">▶</button>
-  <button id="pb-next" class="ctrl">⏭</button>
-</div>
-
-<div id="now-playing" hidden>
-  <div class="np-bg" id="np-bg"></div>
-  <div class="np-card">
-    <img id="np-cover" alt="" src="">
-    <div class="np-meta">
-      <div id="np-title">-</div>
-      <div id="np-artist">-</div>
-      <input id="np-seek" type="range" min="0" max="1000" value="0">
-      <div class="np-times"><span id="np-cur">0:00</span><span id="np-dur">0:00</span></div>
-      <div class="np-controls">
-        <button id="np-prev" class="ctrl big">⏮</button>
-        <button id="np-play" class="ctrl big">▶</button>
-        <button id="np-next" class="ctrl big">⏭</button>
-      </div>
-      <div id="np-lyric" class="np-lyric"></div>
-    </div>
-    <button id="np-close" class="ctrl">✕</button>
-  </div>
+  <button id="pb-prev" class="ctrl"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM9.5 12l8.5 6V6z"/></svg></button>
+  <button id="pb-play" class="ctrl"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+  <button id="pb-next" class="ctrl"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6h2v12H16z"/></svg></button>
 </div>
 
 <audio id="audio" preload="auto"></audio>
