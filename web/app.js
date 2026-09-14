@@ -342,6 +342,8 @@ var App = (function () {
       if (npdur) npdur.textContent = dur
       var seek = document.getElementById('np-seek')
       if (seek && audio.duration) seek.value = String((audio.currentTime / audio.duration) * 1000)
+      var pbf = document.getElementById('pb-fill')
+      if (pbf && audio.duration) pbf.style.width = (audio.currentTime / audio.duration * 100) + '%'
       syncLyric()
     })
 
