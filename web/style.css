@@ -3,7 +3,7 @@
   --txt:#f2f2f5; --sub:#8b8b97; --faint:#5d5d68;
   --accent:#ec4141; --accent2:#ff5252; --accent-soft:rgba(236,65,65,.14);
   --ok:#3ec07b; --line:#2a2a33;
-  --radius:16px; --row:76px; --nav-w:108px;
+  --radius:16px; --row:76px; --nav-w:108px; --safe-bottom:20px;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0}
 html,body{height:100%; background:var(--bg); color:var(--txt); overflow:hidden;
@@ -14,14 +14,14 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 /* ---------- app shell ---------- */
 #app{display:flex; height:100%}
 #nav{width:var(--nav-w); flex:none; background:var(--bg2); border-right:1px solid var(--line);
-  display:flex; flex-direction:column; align-items:center; padding:14px 0; gap:10px}
+  display:flex; flex-direction:column; align-items:center; padding:14px 0 calc(14px + var(--safe-bottom)); gap:10px}
 .nav-logo{width:60px; height:60px; margin-bottom:10px; display:flex; align-items:center; justify-content:center}
 .nav-logo img{width:56px; height:56px; object-fit:contain}
 .nav-btn{width:92px; height:64px; border-radius:14px; color:var(--sub); font-size:16px; transition:.15s}
 .nav-btn.active{background:var(--accent-soft); color:var(--accent); font-weight:600}
 .nav-login{margin-top:auto; width:60px; height:60px; padding:0; display:flex; align-items:center; justify-content:center; overflow:hidden}
 .nav-avatar{width:46px; height:46px; border-radius:50%; object-fit:cover; background:var(--panel2)}
-#content{flex:1; overflow-y:auto; padding:22px 26px 110px}
+#content{flex:1; overflow-y:auto; padding:22px 26px calc(110px + var(--safe-bottom))}
 #content h2{font-size:26px; font-weight:700; margin:2px 0 18px; letter-spacing:.5px}
 
 /* ---------- list rows ---------- */
@@ -45,7 +45,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 .card .c-cnt{color:var(--faint); font-size:14px; margin-top:6px}
 
 /* ---------- player bar ---------- */
-#player-bar{position:fixed; left:var(--nav-w); right:0; bottom:0; height:92px; z-index:40;
+#player-bar{position:fixed; left:var(--nav-w); right:0; bottom:var(--safe-bottom); height:92px; z-index:40;
   background:rgba(20,20,26,.92); backdrop-filter:blur(20px); border-top:1px solid var(--line);
   align-items:center; gap:18px; padding:0 22px}
 #player-bar:not([hidden]){display:flex}
