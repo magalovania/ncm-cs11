@@ -51,6 +51,8 @@ node server/gateway.js             # → :8080
 
 详见 `server/DEPLOY.md`：Docker Compose 一键部署、防火墙放行、流量与合规说明。
 
+公网必配访问口令：服务器上创建 `server/.env` 写 `GATE_KEY=<口令>`，无口令请求一律 403（防扫描白嫖）。
+
 要点：海外服务器必须设 `ENABLE_RANDOM_CN_IP=true`（docker-compose.yml 已配好），
 否则网易对非大陆 IP 的请求返回 `460 cheating`，取歌登录全挂。
 
