@@ -274,7 +274,7 @@ var App = (function () {
 
   function playFromFm() {
     if (!state.fmBuffer.length) {
-      API.personalFm().then(function (r) { state.fmBuffer = r.data || []; if (state.fmBuffer.length) playFromFm() })
+      API.personalFm().then(function (r) { (r.data || []).forEach(function (x) { state.fmBuffer.push(x) }); if (state.fmBuffer.length) playFromFm() })
       return
     }
     var t = state.fmBuffer.shift()
@@ -304,20 +304,66 @@ var App = (function () {
     }).catch(function () {})
   }
 
+  // ---------- next-track URL prefetch ----------
+  // song/url direct links live ~20min (expi:1200). Prefetch the next track's URL right
+  // after the current one starts, so 切歌 (方控/按钮/自动连播) hits the cache and starts
+  // instantly instead of paying the cross-ocean round trip every time.
+  var urlCache = {}            // id -> {url|dead, q, ts} | {pending}
+  var URL_TTL = 15 * 60 * 1000
+  var DEAD_TTL = 60 * 1000
+  var fmFetching = false
+
+  function cacheHit(id) {
+    var e = urlCache[id]
+    if (!e || e.pending || e.q !== state.quality) return null
+    if (e.dead) return Date.now() - e.ts <= DEAD_TTL ? e : null
+    return Date.now() - e.ts <= URL_TTL ? e : null
+  }
+
+  function ensureFmBuffer() {
+    if (fmFetching || state.fmBuffer.length >= 2) return
+    fmFetching = true
+    API.personalFm().then(function (r) {
+      (r.data || []).forEach(function (x) { state.fmBuffer.push(x) })
+    }).catch(function () {}).then(function () { fmFetching = false })
+  }
+
+  function prefetchNextUrl() {
+    var nt = null
+    if (state.mode === 'fm') { ensureFmBuffer(); nt = state.fmBuffer[0] }
+    else nt = state.queue[state.index + 1]
+    if (!nt || !nt.id || cacheHit(nt.id)) return
+    var e = urlCache[nt.id]
+    if (e && e.pending && Date.now() - e.ts < 30000) return   // fetch in flight
+    urlCache[nt.id] = { pending: true, ts: Date.now() }
+    API.songUrl(nt.id, state.quality).then(function (r) {
+      var d = r.data && r.data[0]
+      if (d && d.url) urlCache[nt.id] = { url: d.url, q: state.quality, ts: Date.now() }
+      else urlCache[nt.id] = { dead: true, q: state.quality, ts: Date.now() }   // 无版权/VIP：短缓存，连跳免等
+    }).catch(function () { delete urlCache[nt.id] })
+  }
+
   function playTrack(t) {
     if (!t || !t.id) return
     showBarLoading(t)
+    var hit = cacheHit(t.id)
+    if (hit) return startTrack(t, hit)
     API.songUrl(t.id, state.quality).then(function (r) {
       var d = r.data && r.data[0]
-      var url = d && d.url
-      if (!url) { next(); return }  // 无版权/VIP，跳下一首（解灰已由后端尝试）
-      audio.src = url
-      audio.play().then(function () {}).catch(function () {})
-      updateBar(t)
-      notifyMedia(t)
-      if (state.view === 'nowplaying') renderNowPlaying()   // 切歌时刷新当前播放视图（标题/封面/歌词）
-      if (!trackPic(t)) ensureCover(t)   // 搜索/FM 等接口不带封面，按需补取
+      startTrack(t, d && d.url ? { url: d.url, q: state.quality, ts: Date.now() } : { dead: true, q: state.quality, ts: Date.now() })
     }).catch(function () { next() })
+  }
+
+  function startTrack(t, e) {
+    urlCache[t.id] = e          // remember (prev/replay reuse it within TTL)
+    if (!e.url) { next(); return }  // 无版权/VIP，跳下一首（解灰已由后端尝试）
+    audio.src = e.url
+    audio.play().then(function () {}).catch(function () {})
+    updateBar(t)
+    notifyMedia(t)
+    if (state.view === 'nowplaying') renderNowPlaying()   // 切歌时刷新当前播放视图（标题/封面/歌词）
+    if (!trackPic(t)) ensureCover(t)   // 搜索/FM 等接口不带封面，按需补取
+    prefetchNextUrl()           // warm the next track while this one plays
   }
 
   function cur() { return state.index >= 0 ? state.queue[state.index] : null }
