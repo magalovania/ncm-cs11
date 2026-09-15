@@ -18,6 +18,9 @@ services:
     environment:
       API_HOST: "api"
       API_PORT: "3000"
+      # Access gate — put GATE_KEY=<your-password> in server/.env (gitignored).
+      # Without it the gateway stays open (only for trusted networks / dev).
+      GATE_KEY: "${GATE_KEY}"
     depends_on:
       - api
     restart: unless-stopped

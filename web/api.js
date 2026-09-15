@@ -13,6 +13,14 @@ var API = (function () {
   function getCookie() { return store('ncm_cookie') || '' }
   function setCookie(c) { store('ncm_cookie', c || '') }
 
+  // Access key for the gateway gate (GATE_KEY). Bootstrapped from ?key= in the URL
+  // (gate page or APK server address may carry it), then kept in localStorage.
+  ;(function () {
+    var m = /[?&]key=([^&]+)/.exec(location.search)
+    if (m) { try { localStorage.setItem('ncm_key', decodeURIComponent(m[1])) } catch (e) {} }
+  })()
+  function getKey() { return store('ncm_key') || '' }
+
   function call(endpoint, params) {
     return new Promise(function (resolve, reject) {
       var parts = []
@@ -20,6 +28,8 @@ var API = (function () {
       p._t = String(Date.now())   // cache-buster: API caches GET for 2min; QR login must not get a stale key
       var ck = getCookie()
       if (ck) p.cookie = ck
+      var gk = getKey()
+      if (gk) p.key = gk         // gateway access key
       Object.keys(p).forEach(function (k) {
         if (p[k] === undefined || p[k] === null || p[k] === '') return
         parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(p[k]))

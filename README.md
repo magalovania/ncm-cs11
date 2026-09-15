@@ -67,6 +67,7 @@ node server/gateway.js             # → :8080
 
 ## 设计要点
 
+- **访问口令（公网必配）**：设 `GATE_KEY` 环境变量后，网关对无口令请求一律 403（页面返回口令输入页），扫描器/白嫖者只能看到 403；每台设备输一次后 localStorage + cookie 双存储记住，车机熄火重启无感
 - **同源免 CORS**：网关单进程同时托管页面与代理 API；登录接口把 `Set-Cookie` 注入 JSON body——车机 http 非 localhost 环境浏览器 cookie 不可靠，前端存 localStorage 显式回放
 - **缓存破坏戳**：API 的 GET 缓存 2 分钟，前端所有请求带 `_t` 时间戳（QR 登录尤其必须，否则拿到旧 key 扫不出）
 - **流量友好**：音频直连网易云 CDN，VPS 只出页面与 JSON，1G/月流量用不完
