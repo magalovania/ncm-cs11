@@ -1,9 +1,11 @@
 // Minimal gateway: serve web/ static + proxy /api/* to NeteaseCloudMusicApi (default :3000).
 // One process, same-origin, no CORS needed. Dev and prod use the same layout.
 //
-// Access gate (optional): set GATE_KEY and every request must carry the key —
-// via query param `?key=` or the `ncm_gate` cookie (set on first successful entry).
-// Strangers/scanners only ever see 403. Without GATE_KEY the gateway stays open (dev).
+// Access gate (optional): set GATE_KEY and every request must carry the key via the
+// `ncm_gate` cookie (set by the password page). No query param in the page URL —
+// old car WebViews replace XHR query strings with the page's query, which broke QR
+// login (the QR `?key=` got overwritten). Cookie-only avoids that.
+// Without GATE_KEY the gateway stays open (dev).
 //
 // Usage:  node gateway.js                     (PORT=8080, API_PORT=3000)
 //         GATE_KEY=secret node gateway.js      (gated)
@@ -12,7 +14,7 @@ const http = require('http')
 const fs = require('fs')
 const path = require('path')
 
-const WEB_ROOT = path.resolve(__dirname, '..', 'web')
+const WEB_ROOT = process.env.WEB_ROOT || path.resolve(__dirname, '..', 'web')
 const API_PORT = Number(process.env.API_PORT) || 3000
 const API_HOST = process.env.API_HOST || '127.0.0.1'
 const PORT = Number(process.env.PORT) || 8080
@@ -30,19 +32,17 @@ const MIME = {
   '.ico': 'image/x-icon',
 }
 
-// ---------- access gate ----------
-function reqKey(req) {
-  const m = /[?&]key=([^&]*)/.exec(req.url)
-  if (m) return decodeURIComponent(m[1])
+// ---------- access gate (cookie-only, no URL query) ----------
+function gateKey(req) {
   const ck = /(?:^|;\s*)ncm_gate=([^;]*)/.exec(req.headers.cookie || '')
   return ck ? decodeURIComponent(ck[1]) : ''
 }
-function gateOk(req) { return !GATE_KEY || reqKey(req) === GATE_KEY }
+function gateOk(req) { return !GATE_KEY || gateKey(req) === GATE_KEY }
 
-// Self-contained password page. Touch-sized, dark, numeric keyboard.
-// - Arrived WITH ?key= in URL → previous attempt failed: drop the stored key, show error
-//   (prevents a self-heal redirect loop). Arrived WITHOUT ?key= → if localStorage has a
-//   key, auto-redirect with it (cookie may just have expired; no typing needed).
+// Self-contained password page. Dark, numeric keyboard, touch-sized.
+// On entry: write the ncm_gate cookie via document.cookie + redirect to '/' (NO query).
+// The page URL stays clean so the car WebView doesn't clobber XHR query strings.
+// If we are on the gate page but already have a stored key → the cookie was wrong/expired.
 const GATE_PAGE = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">'
 + '<meta name="viewport" content="width=device-width, initial-scale=1">'
 + '<title>访问验证</title><style>*{box-sizing:border-box;margin:0}'
@@ -57,15 +57,14 @@ const GATE_PAGE = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"
 + '<input id="k" type="password" inputmode="numeric" autofocus autocomplete="off">'
 + '<button id="go">进入</button><div class="err" id="err"></div></div>'
 + '<script>(function () {'
-+ 'var had = /[?&]key=/.test(location.search);'
-+ 'if (had) { try { localStorage.removeItem(\'ncm_key\') } catch (e) {} }'
-+ 'else { try { var s = localStorage.getItem(\'ncm_key\');'
-+ '  if (s) { location.replace(\'/?key=\' + encodeURIComponent(s)); return } } catch (e) {} }'
-+ 'if (had) { document.getElementById(\'hint\').textContent = \'口令不正确，请重试\' }'
++ 'var stored = localStorage.getItem(\'ncm_gk\');'
++ 'if (stored) { document.getElementById(\'hint\').textContent = \'口令不正确或已过期，请重新输入\';'
++ '  try { localStorage.removeItem(\'ncm_gk\') } catch (e) {} document.cookie = \'ncm_gate=; Path=/; Max-Age=0\' }'
 + 'var k = document.getElementById(\'k\'), go = document.getElementById(\'go\');'
 + 'function submit() { var v = k.value.trim(); if (!v) return;'
-+ '  try { localStorage.setItem(\'ncm_key\', v) } catch (e) {}'
-+ '  location.replace(\'/?key=\' + encodeURIComponent(v)) }'
++ '  try { localStorage.setItem(\'ncm_gk\', v) } catch (e) {}'
++ '  document.cookie = \'ncm_gate=\' + encodeURIComponent(v) + \'; Path=/; Max-Age=31536000\';'
++ '  location.replace(\'/\') }'
 + 'go.onclick = submit;'
 + 'k.addEventListener(\'keydown\', function (e) { if (e.key === \'Enter\') submit() });'
 + '})()</script></body></html>'
@@ -96,7 +95,6 @@ function proxy(req, res) {
     }
     // login endpoints: inject the cookie string into the JSON body from Set-Cookie
     // headers, so the web client can store it explicitly and replay it via ?cookie=.
-    // Needed on the car (http, non-localhost) where Secure browser cookies won't persist.
     const setCookies = r.headers['set-cookie'] || []
     const chunks = []
     r.on('data', c => chunks.push(c))
@@ -141,11 +139,6 @@ function serveStatic(req, res) {
     const ext = path.extname(fp).toLowerCase()
     const headers = { 'content-type': MIME[ext] || 'application/octet-stream' }
     if (ext === '.html' || ext === '.js' || ext === '.css') headers['cache-control'] = 'no-store'
-    // Entry with ?key= → the browser just typed the password: set the cookie so
-    // subsequent static fetches (script/link/img) pass the gate without a query param.
-    if (GATE_KEY && /[?&]key=/.test(req.url)) {
-      headers['set-cookie'] = 'ncm_gate=' + encodeURIComponent(GATE_KEY) + '; Path=/; Max-Age=31536000'
-    }
     res.writeHead(200, headers)
     res.end(data)
   })
