@@ -30,6 +30,19 @@ var App = (function () {
     document.documentElement.style.zoom = String(z)
   }
 
+  function eachNode(nodes, fn) {
+    for (var i = 0; i < nodes.length; i++) fn(nodes[i], i)
+  }
+
+  function hasClass(node, name) {
+    return new RegExp('(^|\\s)' + name + '(\\s|$)').test(node.className)
+  }
+
+  function toggleClass(node, name, enabled) {
+    if (enabled && !hasClass(node, name)) node.className = (node.className + ' ' + name).replace(/^\s+|\s+$/g, '')
+    if (!enabled && hasClass(node, name)) node.className = node.className.replace(new RegExp('(^|\\s)' + name + '(?=\\s|$)', 'g'), ' ').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '')
+  }
+
   // ---------- utils ----------
   function fmt(s) { s = s || 0; var m = Math.floor(s / 60), r = Math.floor(s % 60); return m + ':' + (r < 10 ? '0' : '') + r }
   function el(html) { var d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild }
@@ -48,8 +61,8 @@ var App = (function () {
   // ---------- routing ----------
   function go(view) {
     state.view = view
-    document.querySelectorAll('.nav-btn').forEach(function (b) {
-      b.classList.toggle('active', b.dataset.view === view)
+    eachNode(document.querySelectorAll('.nav-btn'), function (b) {
+      toggleClass(b, 'active', b.getAttribute('data-view') === view)
     })
     if (view === 'login') return renderLogin()
     if (!API.isLogged()) { return renderLogin() }
@@ -358,7 +371,8 @@ var App = (function () {
     urlCache[t.id] = e          // remember (prev/replay reuse it within TTL)
     if (!e.url) { next(); return }  // 无版权/VIP，跳下一首（解灰已由后端尝试）
     audio.src = e.url
-    audio.play().then(function () {}).catch(function () {})
+    var playResult = audio.play()
+    if (playResult && playResult.catch) playResult.catch(function () {})
     updateBar(t)
     notifyMedia(t)
     if (state.view === 'nowplaying') renderNowPlaying()   // 切歌时刷新当前播放视图（标题/封面/歌词）
@@ -446,8 +460,8 @@ var App = (function () {
 
   // ---------- bindings ----------
   function bind() {
-    document.querySelectorAll('.nav-btn').forEach(function (b) {
-      b.onclick = function () { go(b.dataset.view) }
+    eachNode(document.querySelectorAll('.nav-btn'), function (b) {
+      b.onclick = function () { go(b.getAttribute('data-view')) }
     })
     document.getElementById('nav-login').onclick = function () { go(API.isLogged() ? 'settings' : 'login') }
     document.getElementById('pb-play').onclick = toggle
@@ -484,9 +498,10 @@ var App = (function () {
     // keyboard (dev convenience)
     document.addEventListener('keydown', function (e) {
       if (e.target && e.target.tagName === 'INPUT') return
-      if (e.code === 'Space') { e.preventDefault(); toggle() }
-      else if (e.code === 'ArrowRight') next()
-      else if (e.code === 'ArrowLeft') prev()
+      var code = e.code || e.key || e.keyCode
+      if (code === 'Space' || code === ' ' || code === 32) { e.preventDefault(); toggle() }
+      else if (code === 'ArrowRight' || code === 39) next()
+      else if (code === 'ArrowLeft' || code === 37) prev()
     })
   }
 
@@ -498,7 +513,8 @@ var App = (function () {
     box._active = active
     Array.prototype.forEach.call(box.children, function (d, i) { d.className = i === active ? 'cur' : '' })
     if (active >= 0 && box.children[active]) {
-      box.children[active].scrollIntoView({ block: 'center', behavior: 'smooth' })
+      try { box.children[active].scrollIntoView({ block: 'center', behavior: 'smooth' }) }
+      catch (e) { box.children[active].scrollIntoView(false) }
     }
   }
 
@@ -506,7 +522,11 @@ var App = (function () {
   function renderSettings() {
     var c = document.getElementById('content'); empty(c)
     c.appendChild(el('<h2>设置</h2>'))
-    var srvRow = el('<div class="set-row"><div>服务器地址</div><div style="flex:1;text-align:right;color:var(--sub);margin-left:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + location.origin + '</div></div>')
+    var serverLabel = location.origin
+    if (window.Android && window.Android.getServer) {
+      try { serverLabel = window.Android.getServer() } catch (e) {}
+    }
+    var srvRow = el('<div class="set-row"><div>服务器地址</div><div class="server-value">' + serverLabel + '</div></div>')
     c.appendChild(srvRow)
     var srvBtn = el('<button class="btn" style="margin:0 0 16px">修改服务器地址</button>')
     c.appendChild(srvBtn)
@@ -595,5 +615,3 @@ var Lrc = (function () {
   }
   return { parse: parse }
 })()
-
-App.init()

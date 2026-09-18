@@ -3,7 +3,29 @@
 'use strict'
 
 var API = (function () {
-  var BASE = '/api'
+  var BASE = serverBase() + '/api'
+
+  function serverBase() {
+    var configured = ''
+    if (window.Android && window.Android.getServer) {
+      try { configured = window.Android.getServer() || '' } catch (e) {}
+    }
+    if (!configured && location.protocol !== 'file:') configured = location.origin
+    return splitServer(configured).base
+  }
+
+  function splitServer(configured) {
+    var clean = configured || ''
+    var hash = clean.indexOf('#')
+    if (hash >= 0) clean = clean.slice(0, hash)
+    var query = clean.indexOf('?')
+    var search = query >= 0 ? clean.slice(query + 1) : ''
+    var keyMatch = /(?:^|&)key=([^&]*)/.exec(search)
+    return {
+      base: (query >= 0 ? clean.slice(0, query) : clean).replace(/\/$/, ''),
+      key: keyMatch ? decodeURIComponent(keyMatch[1]) : ''
+    }
+  }
 
   function store(k, v) {
     if (v === undefined) { try { return localStorage.getItem(k) } catch (e) { return null } }
@@ -19,7 +41,15 @@ var API = (function () {
     var m = /[?&]key=([^&]+)/.exec(location.search)
     if (m) { try { localStorage.setItem('ncm_key', decodeURIComponent(m[1])) } catch (e) {} }
   })()
-  function getKey() { return store('ncm_key') || '' }
+  function getKey() {
+    var stored = store('ncm_key') || ''
+    if (stored) return stored
+    var configured = ''
+    if (window.Android && window.Android.getServer) {
+      try { configured = window.Android.getServer() || '' } catch (e) {}
+    }
+    return splitServer(configured).key
+  }
 
   function call(endpoint, params) {
     return new Promise(function (resolve, reject) {
@@ -38,6 +68,7 @@ var API = (function () {
       var xhr = new XMLHttpRequest()
       xhr.open('GET', url, true)
       xhr.timeout = 20000
+      if (location.protocol === 'file:' && /^https?:/i.test(url)) xhr.withCredentials = true
       xhr.onload = function () {
         try { resolve(JSON.parse(xhr.responseText)) }
         catch (e) { reject(new Error('解析失败: ' + xhr.responseText.slice(0, 120))) }

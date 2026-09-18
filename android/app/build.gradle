@@ -8,10 +8,17 @@ android {
 
   defaultConfig {
     applicationId "com.ncmcs11"
-    minSdk 21
+    minSdk 19
     targetSdk 34
     versionCode 1
-    versionName "1.0"
+    versionName "1.1"
+  }
+
+  sourceSets {
+    main {
+      // Bundle the lightweight web client for API 19; API calls still use the configured server.
+      assets.srcDir '../../web'
+    }
   }
 
   buildTypes {

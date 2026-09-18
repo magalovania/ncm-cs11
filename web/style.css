@@ -6,6 +6,7 @@
   --radius:16px; --row:76px; --nav-w:108px; --safe-bottom:20px;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0}
+[hidden]{display:none!important}
 html,body{height:100%; background:var(--bg); color:var(--txt); overflow:hidden;
   font-family:-apple-system,"HarmonyOS Sans","Microsoft YaHei","PingFang SC",sans-serif; font-size:19px; -webkit-font-smoothing:antialiased}
 button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
@@ -46,7 +47,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 
 /* ---------- player bar ---------- */
 #player-bar{position:fixed; left:var(--nav-w); right:0; bottom:var(--safe-bottom); height:92px; z-index:40;
-  background:rgba(20,20,26,.92); backdrop-filter:blur(20px); border-top:1px solid var(--line);
+  background:rgba(20,20,26,.96); border-top:1px solid var(--line);
   align-items:center; gap:18px; padding:0 22px}
 #player-bar:not([hidden]){display:flex}
 #pb-bar{position:absolute; left:0; top:0; right:0; height:3px; background:var(--line)}
@@ -68,8 +69,8 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 
 /* ---------- now playing view (routed, fills content area; left=cover+controls, right=lyrics) ---------- */
 .np-view{display:flex; gap:48px; height:100%; align-items:stretch}
-.np-left{width:min(320px,42vh); flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px}
-#np-cover{width:100%; aspect-ratio:1; border-radius:22px; object-fit:cover; background:var(--panel2); box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.np-left{width:42vh; max-width:320px; flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px}
+#np-cover{width:100%; height:auto; border-radius:22px; object-fit:cover; background:var(--panel2); box-shadow:0 24px 60px rgba(0,0,0,.55)}
 .np-left .np-times{display:flex; justify-content:space-between; width:100%; color:var(--sub); font-size:15px; font-variant-numeric:tabular-nums}
 #np-seek{-webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:3px; background:var(--line); outline:none}
 #np-seek::-webkit-slider-thumb{-webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.4)}
@@ -101,6 +102,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 .set-row{display:flex; align-items:center; justify-content:space-between; min-height:var(--row); padding:10px 16px;
   border-radius:14px; background:var(--panel); border:1px solid var(--line); margin-bottom:10px}
 .set-row select{height:52px; border-radius:12px; background:var(--panel2); color:var(--txt); border:1px solid var(--line); font-size:18px; padding:0 14px}
+.server-value{flex:1; text-align:right; color:var(--sub); margin-left:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .muted{color:var(--faint); font-size:15px; line-height:1.6}
 .loading,.empty{color:var(--faint); text-align:center; padding:50px; font-size:17px}
 /* ---------- FM landing ---------- */
@@ -110,3 +112,19 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 .fm-tip{color:var(--sub); font-size:18px; max-width:440px; line-height:1.6}
 .big-start{height:68px; padding:0 44px; font-size:21px; background:var(--accent); color:#fff}
 .big-start:active{background:var(--accent2); color:#fff}
+
+@supports not (display:flex) {
+  #nav{position:fixed; left:0; top:0; bottom:0}
+  #content{position:absolute; left:108px; right:0; top:0; bottom:0}
+  .nav-btn{display:block; margin:10px auto}
+  .nav-login{position:absolute; left:24px; bottom:20px}
+  .row>*{display:inline-block; vertical-align:middle}
+  .grid{display:block}
+  .card{display:inline-block; vertical-align:top; width:30%; margin:1.5%}
+  .card img{height:170px}
+  #player-bar:not([hidden]){display:block; padding-top:14px}
+  #player-bar>*{display:inline-block; vertical-align:middle; margin-right:14px}
+  #pb-info{width:35%}
+  .np-left,.np-right{display:inline-block; vertical-align:top}
+  .np-right{width:50%; height:100%}
+}

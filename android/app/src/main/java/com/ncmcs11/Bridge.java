@@ -25,6 +25,11 @@ public class Bridge {
   }
 
   @JavascriptInterface
+  public String getServer() {
+    return activity.currentUrl();
+  }
+
+  @JavascriptInterface
   public void setServer(final String url) {
     activity.runOnUiThread(new Runnable() { @Override public void run() { activity.setServer(url); } });
   }

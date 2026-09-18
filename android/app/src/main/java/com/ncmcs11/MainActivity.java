@@ -6,12 +6,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Build;
 import android.view.KeyEvent;
 import android.view.WindowManager;
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceError;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -25,10 +23,10 @@ import android.widget.Toast;
  * {@link MusicService}. Bridge (window.Android) handles bidirectional comms with the web UI.
  */
 public class MainActivity extends Activity {
-  private static final String TAG = "NCMcs11";
   private static final String PREF = "ncmcs11";
   private static final String KEY_URL = "server_url";
   private static final String DEFAULT_URL = "http://192.168.31.187:8080";
+  private static final String APP_URL = "file:///android_asset/index.html";
 
   private WebView web;
   private SharedPreferences prefs;
@@ -51,9 +49,8 @@ public class MainActivity extends Activity {
     ws.setJavaScriptCanOpenWindowsAutomatically(true);
     ws.setCacheMode(WebSettings.LOAD_NO_CACHE);      // dev: always fresh UI
     web.setWebViewClient(new WebViewClient() {
-      @Override public void onReceivedError(WebView v, int code, String desc, String url) { fail(); }
-      @Override public void onReceivedError(WebView v, WebResourceRequest req, WebResourceError err) {
-        if (req.isForMainFrame()) fail();
+      @Override public void onReceivedError(WebView view, int code, String description, String failingUrl) {
+        if (APP_URL.equals(failingUrl)) fail();
       }
     });
     web.setWebChromeClient(new WebChromeClient());
@@ -61,7 +58,7 @@ public class MainActivity extends Activity {
     loadSaved();
   }
 
-  private void loadSaved() { errorShown = false; web.loadUrl(currentUrl()); }
+  private void loadSaved() { errorShown = false; web.loadUrl(APP_URL); }
 
   String currentUrl() { return prefs.getString(KEY_URL, DEFAULT_URL); }
 
@@ -99,7 +96,12 @@ public class MainActivity extends Activity {
   }
 
   void evalJs(final String js) {
-    runOnUiThread(new Runnable() { @Override public void run() { web.evaluateJavascript(js, null); } });
+    runOnUiThread(new Runnable() {
+      @Override public void run() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) WebViewScriptEvaluator.evaluate(web, js);
+        else web.loadUrl("javascript:" + js);
+      }
+    });
   }
 
   static MainActivity getInstance() { return instance; }

@@ -1,6 +1,6 @@
 # ncm-cs11 — 领克 CS11 车机网易云音乐
 
-为领克 CS11 老款安卓车机（32 位 ARM，Android ≈ 5.0+）自建的网易云音乐客户端。
+为领克 CS11 老款安卓车机（32 位 ARM，Android 4.4+）自建的网易云音乐客户端。
 
 车机太老、装不了官方 App，于是自搭一套：**约 63KB 的 WebView 壳 APK** 承载 UI，
 音乐数据与页面托管在一台车能访问的服务器上，音频直连网易云 CDN，不经服务器。
@@ -21,7 +21,7 @@ gateway :8080 ── 同源托管 web/ 静态页面
 |------|------|
 | `web/` | 移动优先播放器 Web UI。零框架、XHR + 原生 JS，兼容老车机 WebView |
 | `server/` | VPS 端：第三方 API（gitignore 不入库）+ 零依赖 Node 网关 + Docker 部署件 |
-| `android/` | 车机 APK：纯 Android framework，零外部依赖，minSdk 21 |
+| `android/` | 车机 APK：纯 Android framework，零外部依赖，minSdk 19 |
 
 ## 功能
 
@@ -29,7 +29,7 @@ gateway :8080 ── 同源托管 web/ 静态页面
 - 我的歌单 / 歌单详情 / 私人 FM / 搜索 / 推荐歌单（换一换）
 - 当前播放全屏页：大封面 + 歌词 + 播放队列（YesPlayMusic 风格暗色 UI）
 - 车机适配：界面缩放、底部安全留白（避开系统底栏）、大触控目标
-- APK 原生能力：服务器地址可改、MediaSession 接管方控与仪表盘显示、常驻通知
+- APK 原生能力：服务器地址可改、MediaSession/RemoteControlClient 接管方控与仪表盘显示、常驻通知
 
 ## 快速开始（本地）
 
@@ -58,14 +58,14 @@ node server/gateway.js             # → :8080
 
 ## 车机 APK
 
-`android/` — 纯 framework 实现（无 androidx），minSdk 21 / targetSdk 34，debug APK ≈ 63KB（其中 5 密度启动图标约 32KB，代码本体极小）。
+`android/` — 纯 framework 实现（无 androidx），minSdk 19 / targetSdk 34。Web UI 内置在 APK 中，避免 Android 4.4 系统 WebView 因现代网页特性白屏；API 和音频仍连接配置的服务器。
 
 - 前置：JDK 17+ 与 Android SDK（`android/local.properties` 写 `sdk.dir=<SDK 路径>`，或设 `ANDROID_HOME` 环境变量）
 - 构建：`cd android && gradlew assembleDebug`（macOS/Linux 用 `./gradlew`；已带 wrapper，首次运行自动下载 Gradle 8.0.1）→ `app/build/outputs/apk/debug/`
 - 不想自己构建：直接从 [Releases](../../releases) 下载预编译 APK（debug 签名）
 - 仅三个类：
   - `MainActivity` — 全屏 WebView 壳；服务器地址存 SharedPreferences，连接失败自动弹原生对话框改地址
-  - `MusicService` — MediaSession + 常驻前台通知；CS11 默认把方控映射到媒体键，据此接管方控与仪表盘显示
+  - `MusicService` — Android 5.0+ 使用 MediaSession，Android 4.4 使用 RemoteControlClient；两者均配合常驻前台通知接管方控与仪表盘显示
   - `Bridge` — 暴露 `window.Android`（setMedia/setPlaying/setServer 等），媒体键经 `window.__bridge.onMediaKey()` 回调进 Web
 
 ## 设计要点
