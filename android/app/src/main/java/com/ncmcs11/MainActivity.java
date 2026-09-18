@@ -30,7 +30,7 @@ public class MainActivity extends Activity {
   private static final String PREF = "ncmcs11";
   private static final String KEY_URL = "server_url";
   private static final String KEY_GATE = "gate_key";
-  private static final String DEFAULT_URL = "http://:8080";
+  private static final String DEFAULT_URL = "http://192.168.31.187:8080";
   private static final String APP_PATH = "index.html";
 
   private WebView web;
