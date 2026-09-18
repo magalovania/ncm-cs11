@@ -33,11 +33,15 @@ var API = (function () {
 
   // The APK stores GATE_KEY separately so it cannot collide with QR endpoints' `key`.
   // Browser clients authenticate with the ncm_gate cookie set by the password page.
+  ;(function () {
+    var legacy = /[?&]key=([^&]+)/.exec(location.search)
+    if (legacy) store('ncm_gate_key', decodeURIComponent(legacy[1]))
+  })()
   function getKey() {
     if (window.Android && window.Android.getGateKey) {
       try { return window.Android.getGateKey() || '' } catch (e) {}
     }
-    return ''
+    return store('ncm_gate_key') || ''
   }
 
   function call(endpoint, params) {
