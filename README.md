@@ -60,8 +60,9 @@ node server/gateway.js             # → :8080
 
 `android/` — 纯 framework 实现（无 androidx），minSdk 21 / targetSdk 34，debug APK ≈ 63KB（其中 5 密度启动图标约 32KB，代码本体极小）。
 
-- 无 gradle wrapper：需本机 Gradle 8.x + Android SDK（`local.properties` 配置 `sdk.dir`）
-- 构建：`cd android && gradle assembleDebug` → `app/build/outputs/apk/debug/`
+- 前置：JDK 17+ 与 Android SDK（`android/local.properties` 写 `sdk.dir=<SDK 路径>`，或设 `ANDROID_HOME` 环境变量）
+- 构建：`cd android && gradlew assembleDebug`（macOS/Linux 用 `./gradlew`；已带 wrapper，首次运行自动下载 Gradle 8.0.1）→ `app/build/outputs/apk/debug/`
+- 不想自己构建：直接从 [Releases](../../releases) 下载预编译 APK（debug 签名）
 - 仅三个类：
   - `MainActivity` — 全屏 WebView 壳；服务器地址存 SharedPreferences，连接失败自动弹原生对话框改地址
   - `MusicService` — MediaSession + 常驻前台通知；CS11 默认把方控映射到媒体键，据此接管方控与仪表盘显示
