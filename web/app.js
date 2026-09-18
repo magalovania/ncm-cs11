@@ -23,7 +23,11 @@ var App = (function () {
   function applySafeBottom() {
     var on = localStorage.getItem('ncm_safe_bottom_on') !== '0'
     var v = parseInt(localStorage.getItem('ncm_safe_bottom') || '20', 10)
-    document.documentElement.style.setProperty('--safe-bottom', (on ? v : 0) + 'px')
+    var safe = (on ? v : 0) + 'px'
+    if (document.documentElement.style.setProperty) document.documentElement.style.setProperty('--safe-bottom', safe)
+    document.getElementById('nav').style.paddingBottom = (14 + (on ? v : 0)) + 'px'
+    document.getElementById('content').style.paddingBottom = (110 + (on ? v : 0)) + 'px'
+    document.getElementById('player-bar').style.bottom = safe
   }
   function applyZoom() {
     var z = parseFloat(localStorage.getItem('ncm_zoom') || '1')
