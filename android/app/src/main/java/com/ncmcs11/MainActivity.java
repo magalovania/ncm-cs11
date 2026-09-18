@@ -48,6 +48,7 @@ public class MainActivity extends Activity {
     setContentView(R.layout.activity_main);
 
     web = findViewById(R.id.web);
+    web.setBackgroundColor(0xff0e0e12);
     WebSettings ws = web.getSettings();
     ws.setJavaScriptEnabled(true);
     ws.setDomStorageEnabled(true);                  // localStorage
@@ -150,7 +151,13 @@ public class MainActivity extends Activity {
 
   void setServerConfig(String url, String gateKey) {
     if (url == null || url.isEmpty()) return;
-    if (!url.startsWith("http")) url = "http://" + url;
+    if (!url.matches("(?i)^https?://.*")) url = "http://" + url;
+    Uri parsed = Uri.parse(url);
+    if (!("http".equalsIgnoreCase(parsed.getScheme()) || "https".equalsIgnoreCase(parsed.getScheme()))
+      || parsed.getHost() == null || parsed.getHost().isEmpty()) {
+      Toast.makeText(this, "服务器地址无效", Toast.LENGTH_SHORT).show();
+      return;
+    }
     String legacyKey = queryParameter(url, "key");
     if ((gateKey == null || gateKey.isEmpty()) && legacyKey != null) gateKey = legacyKey;
     url = withoutQueryParameter(url, "key");

@@ -11,6 +11,7 @@
 const http = require('http')
 const fs = require('fs')
 const path = require('path')
+const crypto = require('crypto')
 
 const WEB_ROOT = process.env.WEB_ROOT || path.resolve(__dirname, '..', 'web')
 const API_PORT = Number(process.env.API_PORT) || 3000
@@ -42,7 +43,13 @@ function gateKey(req) {
   }
   return ''
 }
-function gateOk(req) { return !GATE_KEY || gateKey(req) === GATE_KEY }
+function gateOk(req) { return !GATE_KEY || safeEqual(gateKey(req), GATE_KEY) }
+
+function safeEqual(actual, expected) {
+  const left = Buffer.from(actual || '')
+  const right = Buffer.from(expected || '')
+  return left.length === right.length && crypto.timingSafeEqual(left, right)
+}
 
 // Self-contained password page. Dark, numeric keyboard, touch-sized.
 // On entry: write the ncm_gate cookie via document.cookie + redirect to '/' (NO query).
@@ -93,6 +100,7 @@ function proxy(req, res) {
     method: req.method,
     headers: Object.assign({}, req.headers, { host: API_HOST + ':' + API_PORT }),
   }
+  delete opts.headers.cookie
   const up = http.request(opts, r => {
     if (!isLogin) {
       res.writeHead(r.statusCode, r.headers)
@@ -116,6 +124,7 @@ function proxy(req, res) {
       }
       const h = Object.assign({}, r.headers)
       delete h['set-cookie']
+      delete h['transfer-encoding']
       h['content-length'] = String(body.length)
       res.writeHead(r.statusCode, h)
       res.end(body)
@@ -136,10 +145,17 @@ function removeGateKey(url) {
 }
 
 function serveStatic(req, res) {
-  let p = decodeURIComponent(req.url.split('?')[0])
+  let p
+  try {
+    p = decodeURIComponent(req.url.split('?')[0])
+  } catch (error) {
+    res.writeHead(400)
+    return res.end('bad request')
+  }
   if (p === '/') p = '/index.html'
-  const fp = path.join(WEB_ROOT, p)
-  if (!fp.startsWith(WEB_ROOT)) {
+  const root = path.resolve(WEB_ROOT)
+  const fp = path.resolve(root, '.' + p)
+  if (fp !== root && !fp.startsWith(root + path.sep)) {
     res.writeHead(403)
     return res.end('forbidden')
   }

@@ -51,6 +51,19 @@ var App = (function () {
   function fmt(s) { s = s || 0; var m = Math.floor(s / 60), r = Math.floor(s % 60); return m + ':' + (r < 10 ? '0' : '') + r }
   function el(html) { var d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild }
   function empty(n) { while (n.firstChild) n.removeChild(n.firstChild) }
+  function textNode(tag, className, text) {
+    var node = document.createElement(tag)
+    if (className) node.className = className
+    node.textContent = text == null ? '' : String(text)
+    return node
+  }
+  function imageNode(className, src) {
+    var image = document.createElement('img')
+    if (className) image.className = className
+    image.alt = ''
+    if (src) image.src = src
+    return image
+  }
 
   function trackArtist(t) {
     var a = t.ar || t.artists || []; return a.map(function (x) { return x.name || x }).join('/')
@@ -147,7 +160,8 @@ var App = (function () {
   function updateLoginBtn() {
     var b = document.getElementById('nav-login')
     if (API.isLogged() && API.avatar()) {
-      b.innerHTML = '<img src="' + API.avatar() + '" class="nav-avatar" alt="">'
+      empty(b)
+      b.appendChild(imageNode('nav-avatar', API.avatar()))
     } else {
       b.textContent = API.isLogged() ? '已登录' : '未登录'
     }
@@ -165,10 +179,10 @@ var App = (function () {
       var grid = el('<div class="grid"></div>')
       list.forEach(function (pl) {
         var card = el('<div class="card"></div>')
-        card.appendChild(el('<img src="' + API.httpsPic(pl.coverImgUrl) + '" alt="">'))
+        card.appendChild(imageNode('', API.httpsPic(pl.coverImgUrl)))
         var info = el('<div class="c-info"></div>')
-        info.appendChild(el('<div class="c-name">' + pl.name + '</div>'))
-        info.appendChild(el('<div class="c-cnt">' + (pl.trackCount || 0) + ' 首</div>'))
+        info.appendChild(textNode('div', 'c-name', pl.name))
+        info.appendChild(textNode('div', 'c-cnt', (pl.trackCount || 0) + ' 首'))
         card.appendChild(info)
         card.onclick = function () { renderPlaylistDetail(pl.id, pl.name) }
         grid.appendChild(card)
@@ -182,7 +196,7 @@ var App = (function () {
 
   function renderPlaylistDetail(id, name) {
     var c = document.getElementById('content'); empty(c)
-    c.appendChild(el('<h2>' + name + '</h2>'))
+    c.appendChild(textNode('h2', '', name))
     c.appendChild(el('<div class="loading" id="pd-load">加载中…</div>'))
     API.playlistTracks(id).then(function (r) {
       var songs = r.songs || []
@@ -192,12 +206,11 @@ var App = (function () {
       var list = el('<div class="list"></div>')
       songs.forEach(function (s, i) {
         var row = el('<div class="row"></div>')
-        row.appendChild(el('<div class="idx">' + (i + 1) + '</div>'))
-        var cv = trackPic(s) ? '<img class="cv" src="' + trackPic(s) + '">' : '<div class="cv"></div>'
-        row.appendChild(el(cv))
+        row.appendChild(textNode('div', 'idx', i + 1))
+        row.appendChild(trackPic(s) ? imageNode('cv', trackPic(s)) : el('<div class="cv"></div>'))
         var m = el('<div style="flex:1;min-width:0"></div>')
-        m.appendChild(el('<div class="ttl">' + trackName(s) + '</div>'))
-        m.appendChild(el('<div class="art">' + trackArtist(s) + '</div>'))
+        m.appendChild(textNode('div', 'ttl', trackName(s)))
+        m.appendChild(textNode('div', 'art', trackArtist(s)))
         row.appendChild(m)
         row.onclick = function () { state.mode = 'list'; playQueue(songs, i) }
         list.appendChild(row)
@@ -232,10 +245,10 @@ var App = (function () {
         if (!list.length) { grid.appendChild(el('<div class="empty">暂无推荐</div>')); return }
         list.forEach(function (pl) {
           var card = el('<div class="card"></div>')
-          card.appendChild(el('<img src="' + API.httpsPic(pl.coverImgUrl) + '" alt="">'))
+          card.appendChild(imageNode('', API.httpsPic(pl.coverImgUrl)))
           var info = el('<div class="c-info"></div>')
-          info.appendChild(el('<div class="c-name">' + pl.name + '</div>'))
-          info.appendChild(el('<div class="c-cnt">' + (pl.playCount ? Math.round(pl.playCount / 10000) + '万播放' : (pl.trackCount || 0) + ' 首') + '</div>'))
+          info.appendChild(textNode('div', 'c-name', pl.name))
+          info.appendChild(textNode('div', 'c-cnt', pl.playCount ? Math.round(pl.playCount / 10000) + '万播放' : (pl.trackCount || 0) + ' 首'))
           card.appendChild(info)
           card.onclick = function () { renderPlaylistDetail(pl.id, pl.name) }
           grid.appendChild(card)
@@ -253,15 +266,15 @@ var App = (function () {
         if (!songs.length) { results.appendChild(el('<div class="empty">无结果</div>')); return }
         songs.forEach(function (s, i) {
           var row = el('<div class="row"></div>')
-          row.appendChild(el('<div class="idx">' + (i + 1) + '</div>'))
+          row.appendChild(textNode('div', 'idx', i + 1))
           var m = el('<div style="flex:1;min-width:0"></div>')
-          m.appendChild(el('<div class="ttl">' + s.name + '</div>'))
-          m.appendChild(el('<div class="art">' + (s.artists || []).map(function (a) { return a.name }).join('/') + '</div>'))
+          m.appendChild(textNode('div', 'ttl', s.name))
+          m.appendChild(textNode('div', 'art', (s.artists || []).map(function (a) { return a.name }).join('/')))
           row.appendChild(m)
           row.onclick = function () { state.mode = 'list'; playQueue(songs, i) }
           results.appendChild(row)
         })
-      }).catch(function (e) { empty(results); results.appendChild(el('<div class="empty">' + e.message + '</div>')) })
+      }).catch(function (e) { empty(results); results.appendChild(textNode('div', 'empty', e.message)) })
     }
     loadRecs()
     document.getElementById('rec-refresh').onclick = loadRecs
@@ -434,7 +447,8 @@ var App = (function () {
       box._active = -1
       empty(box)
       lines.forEach(function (ln, i) {
-        var d = el('<div data-i="' + i + '">' + (ln.text || '…') + '</div>')
+        var d = textNode('div', '', ln.text || '…')
+        d.setAttribute('data-i', i)
         box.appendChild(d)
       })
     }).catch(function () {})
@@ -539,7 +553,8 @@ var App = (function () {
     if (window.Android && window.Android.getGateKey) {
       try { gateLabel = window.Android.getGateKey() } catch (e) {}
     }
-    var srvRow = el('<div class="set-row"><div>服务器地址</div><div class="server-value">' + serverLabel + '</div></div>')
+    var srvRow = el('<div class="set-row"><div>服务器地址</div><div class="server-value"></div></div>')
+    srvRow.lastChild.textContent = serverLabel
     c.appendChild(srvRow)
     c.appendChild(el('<div class="set-row"><div>访问口令</div><div class="server-value">' + (gateLabel ? '已设置' : '未设置') + '</div></div>'))
     var srvBtn = el('<button class="btn" style="margin:0 0 16px">修改服务器地址</button>')

@@ -28,6 +28,13 @@ class LocalContentWebViewClient extends WebViewClient {
   }
 
   @Override
+  public boolean shouldOverrideUrlLoading(WebView view, String url) {
+    Uri uri = Uri.parse(url);
+    Uri expected = Uri.parse(activity.currentUrl());
+    return !same(expected.getScheme(), uri.getScheme()) || !same(expected.getAuthority(), uri.getAuthority());
+  }
+
+  @Override
   public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
     String asset = assetPath(url);
     if (asset == null) return super.shouldInterceptRequest(view, url);
