@@ -83,8 +83,12 @@ var App = (function () {
     var img = el('<img id="qr-img" alt="二维码">')
     var status = el('<div id="qr-status">生成二维码中…</div>')
     var tip = el('<div class="login-tip">打开手机网易云音乐 App → 扫一扫，确认登录。无需输入密码。</div>')
-    wrap.appendChild(img); wrap.appendChild(status); wrap.appendChild(tip)
+    var serverButton = el('<button class="btn" id="login-server">服务器设置</button>')
+    wrap.appendChild(img); wrap.appendChild(status); wrap.appendChild(tip); wrap.appendChild(serverButton)
     c.appendChild(wrap)
+    serverButton.onclick = function () {
+      if (window.Android && window.Android.openServerDialog) window.Android.openServerDialog()
+    }
     if (API.isLogged()) {
       status.textContent = '已登录，正在获取信息…'
       img.style.display = 'none'; tip.style.display = 'none'

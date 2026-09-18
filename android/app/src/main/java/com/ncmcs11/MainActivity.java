@@ -5,11 +5,14 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Build;
 import android.view.KeyEvent;
 import android.view.WindowManager;
 import android.webkit.WebChromeClient;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -58,7 +61,24 @@ public class MainActivity extends Activity {
     loadSaved();
   }
 
-  private void loadSaved() { errorShown = false; web.loadUrl(localUrl(APP_PATH)); }
+  private void loadSaved() {
+    errorShown = false;
+    syncGateCookie();
+    web.loadUrl(localUrl(APP_PATH));
+  }
+
+  @SuppressWarnings("deprecation")
+  private void syncGateCookie() {
+    Uri server = Uri.parse(currentUrl());
+    String key = server.getQueryParameter("key");
+    if (key == null || key.isEmpty() || server.getScheme() == null || server.getAuthority() == null) return;
+    CookieSyncManager.createInstance(this);
+    CookieManager cookies = CookieManager.getInstance();
+    cookies.setAcceptCookie(true);
+    cookies.setCookie(server.getScheme() + "://" + server.getAuthority() + "/",
+      "ncm_gate=" + Uri.encode(key) + "; Path=/");
+    CookieSyncManager.getInstance().sync();
+  }
 
   String localUrl(String path) {
     return currentUrl() + (currentUrl().contains("?") ? "&" : "?") + "__ncm_asset=" + path;
