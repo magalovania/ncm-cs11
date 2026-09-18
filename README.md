@@ -81,3 +81,7 @@ node server/gateway.js             # → :8080
 - 自部署私用：不公开服务器地址、不用别人的公共 API 实例（会泄露账号）
 - `server/api/` 为第三方 [NeteaseCloudMusicApi Enhanced](https://github.com/NeteaseCloudMusicApiEnhanced) v4.40.1，gitignore 不入库
 - `docs/`、`CLAUDE.md` 为本地开发记录，gitignore
+
+## License
+
+[MIT](LICENSE)。仅供学习交流，请尊重网易云音乐版权；API 依赖的第三方项目版权归原作者所有。
