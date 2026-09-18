@@ -31,20 +31,17 @@ var API = (function () {
   function getCookie() { return store('ncm_cookie') || '' }
   function setCookie(c) { store('ncm_cookie', c || '') }
 
-  // Access key for the gateway gate (GATE_KEY). Bootstrapped from ?key= in the URL
-  // (gate page or APK server address may carry it), then kept in localStorage.
+  // Access key for the gateway gate (GATE_KEY). The APK stores this separately from
+  // the server URL so it cannot collide with Netease QR endpoints' own `key` field.
   ;(function () {
     var m = /[?&]key=([^&]+)/.exec(location.search)
     if (m) { try { localStorage.setItem('ncm_key', decodeURIComponent(m[1])) } catch (e) {} }
   })()
   function getKey() {
-    var stored = store('ncm_key') || ''
-    if (stored) return stored
-    var configured = location.href
-    if (window.Android && window.Android.getServer) {
-      try { configured = window.Android.getServer() || '' } catch (e) {}
+    if (window.Android && window.Android.getGateKey) {
+      try { return window.Android.getGateKey() || '' } catch (e) {}
     }
-    return splitServer(configured).key
+    return store('ncm_key') || ''
   }
 
   function call(endpoint, params) {
@@ -55,7 +52,7 @@ var API = (function () {
       var ck = getCookie()
       if (ck) p.cookie = ck
       var gk = getKey()
-      if (gk) p.key = gk         // gateway access key
+      if (gk) p.gate_key = gk    // separate from QR endpoints' own `key` parameter
       Object.keys(p).forEach(function (k) {
         if (p[k] === undefined || p[k] === null || p[k] === '') return
         parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(p[k]))

@@ -59,7 +59,7 @@ node server/gateway.js             # → :8080
 
 ## 车机 APK
 
-`android/` — 纯 framework 实现（无 androidx），minSdk 19 / targetSdk 34。Web UI 内置在 APK 中，并以配置的服务器地址作为同源页面加载，既降低 Android 4.4 WebView 白屏风险，也保持 API、cookie 和媒体请求兼容。v1.1.0 的预编译 APK 为 83,057 字节。
+`android/` — 纯 framework 实现（无 androidx），minSdk 19 / targetSdk 34。Web UI 内置在 APK 中，并以配置的服务器地址作为同源页面加载，既降低 Android 4.4 WebView 白屏风险，也保持 API、cookie 和媒体请求兼容。
 
 - 前置：JDK 17+ 与 Android SDK（`android/local.properties` 写 `sdk.dir=<SDK 路径>`，或设 `ANDROID_HOME` 环境变量）
 - 构建：`cd android && gradlew assembleDebug`（macOS/Linux 用 `./gradlew`；已带 wrapper，首次运行自动下载 Gradle 8.0.1）→ `app/build/outputs/apk/debug/`
@@ -73,7 +73,7 @@ node server/gateway.js             # → :8080
 ## 设计要点
 
 - **访问口令（公网必配）**：设 `GATE_KEY` 环境变量后，网关对无口令请求一律 403（页面返回口令输入页），扫描器/白嫖者只能看到 403；每台设备输一次后 localStorage + cookie 双存储记住，车机熄火重启无感
-- **APK 零输入接入**：服务器启用访问口令时，把地址写为 `http://<IP>:8080/?key=<口令>`；APK 会把 `key` 同步为网关 cookie，避免每次启动重新输入
+- **APK 零输入接入**：服务器设置把“后端地址”和可选“访问口令”分开保存；口令经专用 `gate_key` 参数或网关 cookie 校验，不会再与二维码接口自身的 `key` 参数冲突
 - **下一首预取**：每首歌起播时后台预取下一首直链（直链有效期约 20 分钟，命中即瞬时起播）；切歌/方控/自动连播不再付跨洋往返，只有点播第一首仍有一次 RTT
 - **同源免 CORS**：网关单进程同时托管页面与代理 API；登录接口把 `Set-Cookie` 注入 JSON body——车机 http 非 localhost 环境浏览器 cookie 不可靠，前端存 localStorage 显式回放
 - **缓存破坏戳**：API 的 GET 缓存 2 分钟，前端所有请求带 `_t` 时间戳（QR 登录尤其必须，否则拿到旧 key 扫不出）

@@ -107,8 +107,9 @@ var App = (function () {
     var status = document.getElementById('qr-status')
     API.qrKey().then(function (r) {
       var key = r.data && r.data.unikey
-      if (!key) throw new Error('无 key')
+      if (!key) throw new Error(r.message || '接口未返回二维码凭证')
       return API.qrCreate(key).then(function (r2) {
+        if (!r2.data || !r2.data.qrimg) throw new Error(r2.message || '接口未返回二维码图片')
         img.src = r2.data.qrimg
         status.textContent = '请用手机网易云 App 扫码'
         pollQr(key)
@@ -527,11 +528,16 @@ var App = (function () {
     var c = document.getElementById('content'); empty(c)
     c.appendChild(el('<h2>设置</h2>'))
     var serverLabel = location.origin
+    var gateLabel = ''
     if (window.Android && window.Android.getServer) {
       try { serverLabel = window.Android.getServer() } catch (e) {}
     }
+    if (window.Android && window.Android.getGateKey) {
+      try { gateLabel = window.Android.getGateKey() } catch (e) {}
+    }
     var srvRow = el('<div class="set-row"><div>服务器地址</div><div class="server-value">' + serverLabel + '</div></div>')
     c.appendChild(srvRow)
+    c.appendChild(el('<div class="set-row"><div>访问口令</div><div class="server-value">' + (gateLabel ? '已设置' : '未设置') + '</div></div>'))
     var srvBtn = el('<button class="btn" style="margin:0 0 16px">修改服务器地址</button>')
     c.appendChild(srvBtn)
     srvBtn.onclick = function () { if (window.Android && window.Android.openServerDialog) window.Android.openServerDialog() }

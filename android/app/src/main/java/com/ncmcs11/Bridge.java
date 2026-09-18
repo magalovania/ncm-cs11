@@ -30,8 +30,20 @@ public class Bridge {
   }
 
   @JavascriptInterface
+  public String getGateKey() {
+    return activity.currentGateKey();
+  }
+
+  @JavascriptInterface
   public void setServer(final String url) {
     activity.runOnUiThread(new Runnable() { @Override public void run() { activity.setServer(url); } });
+  }
+
+  @JavascriptInterface
+  public void setServerConfig(final String url, final String gateKey) {
+    activity.runOnUiThread(new Runnable() {
+      @Override public void run() { activity.setServerConfig(url, gateKey); }
+    });
   }
 
   @JavascriptInterface

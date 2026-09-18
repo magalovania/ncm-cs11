@@ -2,7 +2,7 @@
 // One process, same-origin, no CORS needed. Dev and prod use the same layout.
 //
 // Access gate (optional): set GATE_KEY and every request must carry the key via the
-// `ncm_gate` cookie (set by the password page) or the API query parameter.
+// `ncm_gate` cookie (set by the password page) or the `gate_key` API parameter.
 // Without GATE_KEY the gateway stays open (dev).
 //
 // Usage:  node gateway.js                     (PORT=8080, API_PORT=3000)
@@ -33,9 +33,9 @@ const MIME = {
 // ---------- access gate ----------
 function gateKey(req) {
   const ck = /(?:^|;\s*)ncm_gate=([^;]*)/.exec(req.headers.cookie || '')
-  if (ck) return decodeURIComponent(ck[1])
-  const query = /[?&]key=([^&]*)/.exec(req.url || '')
-  return query ? decodeURIComponent(query[1]) : ''
+  const query = /[?&]gate_key=([^&]*)/.exec(req.url || '')
+  if (query) return decodeURIComponent(query[1])
+  return ck ? decodeURIComponent(ck[1]) : ''
 }
 function gateOk(req) { return !GATE_KEY || gateKey(req) === GATE_KEY }
 
@@ -79,7 +79,7 @@ function gateDeny(req, res) {
 }
 
 function proxy(req, res) {
-  const target = req.url.replace(/^\/api/, '') || '/'
+  const target = removeGateKey(req.url.replace(/^\/api/, '') || '/')
   const isLogin = target.indexOf('/login/') === 0
   const opts = {
     hostname: API_HOST,
@@ -121,6 +121,13 @@ function proxy(req, res) {
     res.end('API proxy error: ' + e.message + '\nIs the NeteaseCloudMusicApi running on :' + API_PORT + '?')
   })
   req.pipe(up)
+}
+
+function removeGateKey(url) {
+  const parts = url.split('?')
+  if (parts.length < 2) return url
+  const query = parts.slice(1).join('?').split('&').filter(part => !/^gate_key=/.test(part))
+  return parts[0] + (query.length ? '?' + query.join('&') : '')
 }
 
 function serveStatic(req, res) {
