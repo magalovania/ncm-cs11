@@ -2,7 +2,7 @@
 
 为领克 CS11 老款安卓车机（32 位 ARM，Android ≈ 5.0+）自建的网易云音乐客户端。
 
-车机太老、装不了官方 App，于是自搭一套：**约 22KB 的 WebView 壳 APK** 承载 UI，
+车机太老、装不了官方 App，于是自搭一套：**约 63KB 的 WebView 壳 APK** 承载 UI，
 音乐数据与页面托管在一台车能访问的服务器上，音频直连网易云 CDN，不经服务器。
 
 ## 架构
@@ -58,7 +58,7 @@ node server/gateway.js             # → :8080
 
 ## 车机 APK
 
-`android/` — 纯 framework 实现（无 androidx），minSdk 21 / targetSdk 34，debug APK ≈ 22KB。
+`android/` — 纯 framework 实现（无 androidx），minSdk 21 / targetSdk 34，debug APK ≈ 63KB（其中 5 密度启动图标约 32KB，代码本体极小）。
 
 - 无 gradle wrapper：需本机 Gradle 8.x + Android SDK（`local.properties` 配置 `sdk.dir`）
 - 构建：`cd android && gradle assembleDebug` → `app/build/outputs/apk/debug/`
