@@ -35,7 +35,12 @@ function gateKey(req) {
   const ck = /(?:^|;\s*)ncm_gate=([^;]*)/.exec(req.headers.cookie || '')
   const query = /[?&]gate_key=([^&]*)/.exec(req.url || '')
   if (query) return decodeURIComponent(query[1])
-  return ck ? decodeURIComponent(ck[1]) : ''
+  if (ck) return decodeURIComponent(ck[1])
+  if (!/^\/api\//.test(req.url || '')) {
+    const legacy = /[?&]key=([^&]*)/.exec(req.url || '')
+    if (legacy) return decodeURIComponent(legacy[1])
+  }
+  return ''
 }
 function gateOk(req) { return !GATE_KEY || gateKey(req) === GATE_KEY }
 
