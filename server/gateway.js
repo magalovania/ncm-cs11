@@ -2,8 +2,7 @@
 // One process, same-origin, no CORS needed. Dev and prod use the same layout.
 //
 // Access gate (optional): set GATE_KEY and every request must carry the key via the
-// `ncm_gate` cookie (set by the password page). The bundled APK may also send the
-// key as an API query parameter because file:// WebViews cannot share HTTP cookies.
+// `ncm_gate` cookie (set by the password page) or the API query parameter.
 // Without GATE_KEY the gateway stays open (dev).
 //
 // Usage:  node gateway.js                     (PORT=8080, API_PORT=3000)
@@ -31,7 +30,7 @@ const MIME = {
   '.ico': 'image/x-icon',
 }
 
-// ---------- access gate (browser cookie or bundled-APK API query) ----------
+// ---------- access gate ----------
 function gateKey(req) {
   const ck = /(?:^|;\s*)ncm_gate=([^;]*)/.exec(req.headers.cookie || '')
   if (ck) return decodeURIComponent(ck[1])
@@ -70,26 +69,9 @@ const GATE_PAGE = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"
 + 'k.addEventListener(\'keydown\', function (e) { if (e.key === \'Enter\') submit() });'
 + '})()</script></body></html>'
 
-function corsHeaders(req) {
-  const origin = req.headers.origin || ''
-  if (origin === 'null') {
-    return {
-      'access-control-allow-origin': 'null',
-      'access-control-allow-credentials': 'true',
-      'access-control-allow-methods': 'GET, OPTIONS',
-      'access-control-allow-headers': 'content-type',
-    }
-  }
-  return {}
-}
-
-function writeHeadWithCors(req, res, statusCode, headers) {
-  res.writeHead(statusCode, Object.assign({}, headers, corsHeaders(req)))
-}
-
 function gateDeny(req, res) {
   if (/^\/api\//.test(req.url)) {
-    writeHeadWithCors(req, res, 403, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
+    res.writeHead(403, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
     return res.end('{"code":403,"message":"gate denied"}')
   }
   res.writeHead(403, { 'content-type': 'text/html;charset=utf-8', 'cache-control': 'no-store' })
@@ -108,7 +90,7 @@ function proxy(req, res) {
   }
   const up = http.request(opts, r => {
     if (!isLogin) {
-      writeHeadWithCors(req, res, r.statusCode, r.headers)
+      res.writeHead(r.statusCode, r.headers)
       return r.pipe(res)
     }
     // login endpoints: inject the cookie string into the JSON body from Set-Cookie
@@ -130,12 +112,12 @@ function proxy(req, res) {
       const h = Object.assign({}, r.headers)
       delete h['set-cookie']
       h['content-length'] = String(body.length)
-      writeHeadWithCors(req, res, r.statusCode, h)
+      res.writeHead(r.statusCode, h)
       res.end(body)
     })
   })
   up.on('error', e => {
-    writeHeadWithCors(req, res, 502, { 'content-type': 'text/plain;charset=utf-8' })
+    res.writeHead(502, { 'content-type': 'text/plain;charset=utf-8' })
     res.end('API proxy error: ' + e.message + '\nIs the NeteaseCloudMusicApi running on :' + API_PORT + '?')
   })
   req.pipe(up)
@@ -163,10 +145,6 @@ function serveStatic(req, res) {
 }
 
 http.createServer((req, res) => {
-  if (req.method === 'OPTIONS' && req.url.startsWith('/api/')) {
-    writeHeadWithCors(req, res, 204, { 'cache-control': 'no-store' })
-    return res.end()
-  }
   if (!gateOk(req)) return gateDeny(req, res)
   if (req.url.startsWith('/api/')) return proxy(req, res)
   return serveStatic(req, res)

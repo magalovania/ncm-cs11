@@ -6,11 +6,7 @@ var API = (function () {
   var BASE = serverBase() + '/api'
 
   function serverBase() {
-    var configured = ''
-    if (window.Android && window.Android.getServer) {
-      try { configured = window.Android.getServer() || '' } catch (e) {}
-    }
-    if (!configured && location.protocol !== 'file:') configured = location.origin
+    var configured = location.origin
     return splitServer(configured).base
   }
 
@@ -44,7 +40,7 @@ var API = (function () {
   function getKey() {
     var stored = store('ncm_key') || ''
     if (stored) return stored
-    var configured = ''
+    var configured = location.href
     if (window.Android && window.Android.getServer) {
       try { configured = window.Android.getServer() || '' } catch (e) {}
     }
@@ -68,7 +64,6 @@ var API = (function () {
       var xhr = new XMLHttpRequest()
       xhr.open('GET', url, true)
       xhr.timeout = 20000
-      if (location.protocol === 'file:' && /^https?:/i.test(url)) xhr.withCredentials = true
       xhr.onload = function () {
         try { resolve(JSON.parse(xhr.responseText)) }
         catch (e) { reject(new Error('解析失败: ' + xhr.responseText.slice(0, 120))) }

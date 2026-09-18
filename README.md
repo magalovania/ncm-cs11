@@ -58,7 +58,7 @@ node server/gateway.js             # → :8080
 
 ## 车机 APK
 
-`android/` — 纯 framework 实现（无 androidx），minSdk 19 / targetSdk 34。Web UI 内置在 APK 中，避免 Android 4.4 系统 WebView 因现代网页特性白屏；API 和音频仍连接配置的服务器。
+`android/` — 纯 framework 实现（无 androidx），minSdk 19 / targetSdk 34。Web UI 内置在 APK 中，并以配置的服务器地址作为同源页面加载，既降低 Android 4.4 WebView 白屏风险，也保持 API、cookie 和媒体请求兼容。
 
 - 前置：JDK 17+ 与 Android SDK（`android/local.properties` 写 `sdk.dir=<SDK 路径>`，或设 `ANDROID_HOME` 环境变量）
 - 构建：`cd android && gradlew assembleDebug`（macOS/Linux 用 `./gradlew`；已带 wrapper，首次运行自动下载 Gradle 8.0.1）→ `app/build/outputs/apk/debug/`

@@ -26,7 +26,7 @@ public class MainActivity extends Activity {
   private static final String PREF = "ncmcs11";
   private static final String KEY_URL = "server_url";
   private static final String DEFAULT_URL = "http://192.168.31.187:8080";
-  private static final String APP_URL = "file:///android_asset/index.html";
+  private static final String APP_PATH = "index.html";
 
   private WebView web;
   private SharedPreferences prefs;
@@ -48,9 +48,9 @@ public class MainActivity extends Activity {
     ws.setMediaPlaybackRequiresUserGesture(false);  // autoplay
     ws.setJavaScriptCanOpenWindowsAutomatically(true);
     ws.setCacheMode(WebSettings.LOAD_NO_CACHE);      // dev: always fresh UI
-    web.setWebViewClient(new WebViewClient() {
+    web.setWebViewClient(new LocalContentWebViewClient(this) {
       @Override public void onReceivedError(WebView view, int code, String description, String failingUrl) {
-        if (APP_URL.equals(failingUrl)) fail();
+        if (localUrl(APP_PATH).equals(failingUrl)) fail();
       }
     });
     web.setWebChromeClient(new WebChromeClient());
@@ -58,7 +58,11 @@ public class MainActivity extends Activity {
     loadSaved();
   }
 
-  private void loadSaved() { errorShown = false; web.loadUrl(APP_URL); }
+  private void loadSaved() { errorShown = false; web.loadUrl(localUrl(APP_PATH)); }
+
+  String localUrl(String path) {
+    return currentUrl() + (currentUrl().contains("?") ? "&" : "?") + "__ncm_asset=" + path;
+  }
 
   String currentUrl() { return prefs.getString(KEY_URL, DEFAULT_URL); }
 
