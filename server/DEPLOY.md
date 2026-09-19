@@ -37,6 +37,13 @@
 - 想更透明（自己审代码构建）：把 docker-compose.yml 里 `api` 服务的 `image:` 改成
   `build: { context: .., dockerfile: server/Dockerfile.api }`，Dockerfile.api 会 git clone 源码自建。
 
+## 车机截图调试
+
+1. APK 设置页开启「Debug 模式」。
+2. 各页面右上角会显示「截图」按钮；点击后由原生 WebView 截图并上传到当前网关。
+3. Docker 部署的截图保存在服务器仓库的 `server/debug-screenshots/`，每次上传生成同名 `.png` 和 `.json` 元数据文件。
+4. 截图上传沿用 `GATE_KEY` 鉴权，网关限制为 PNG 且单张不超过 8MB；该目录应保持私有，不要公开托管。
+
 ## 460 cheating（海外部署必看）
 网易对「非中国大陆 IP」的请求返回 `460 cheating`。本地（国内 IP）没事；**部署到 GCP 美区 / 港 VPS 必撞**，取歌登录全挂。
 解法：docker-compose 已给 api 开 `ENABLE_RANDOM_CN_IP=true`，自动给每个请求套随机国内 IP（设 `X-Real-IP`），网易当作国内放行。无需手动传 `?realIP=`。

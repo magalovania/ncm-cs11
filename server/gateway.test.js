@@ -3,11 +3,15 @@
 var assert = require('assert')
 var http = require('http')
 var path = require('path')
+var fs = require('fs')
+var os = require('os')
 var childProcess = require('child_process')
 
 var gatewayPort = 39502
 var apiPort = 39501
 var upstreamRequests = []
+var debugRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ncm-debug-'))
+var onePixelPng = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000000020001e221bc330000000049454e44ae426082', 'hex')
 var upstream = http.createServer(function (request, response) {
   upstreamRequests.push({ url: request.url, cookie: request.headers.cookie || '' })
   var body = JSON.stringify({ code: 200, path: request.url })
@@ -37,6 +41,26 @@ function request(pathname, headers) {
   })
 }
 
+function post(pathname, body, headers) {
+  return new Promise(function (resolve, reject) {
+    var request = http.request({
+      hostname: '127.0.0.1',
+      port: gatewayPort,
+      path: pathname,
+      method: 'POST',
+      headers: Object.assign({ 'content-length': body.length }, headers || {})
+    }, function (response) {
+      var chunks = []
+      response.on('data', function (chunk) { chunks.push(chunk) })
+      response.on('end', function () {
+        resolve({ status: response.statusCode, body: Buffer.concat(chunks).toString('utf8') })
+      })
+    })
+    request.on('error', reject)
+    request.end(body)
+  })
+}
+
 function waitForGateway(attempts) {
   return request('/api/ping?gate_key=test-gate').catch(function (error) {
     if (!attempts) throw error
@@ -52,7 +76,8 @@ upstream.listen(apiPort, '127.0.0.1', function () {
       PORT: String(gatewayPort),
       API_PORT: String(apiPort),
       API_HOST: '127.0.0.1',
-      GATE_KEY: 'test-gate'
+      GATE_KEY: 'test-gate',
+      DEBUG_ROOT: debugRoot
     }),
     stdio: 'ignore'
   })
@@ -73,6 +98,15 @@ upstream.listen(apiPort, '127.0.0.1', function () {
     return request('/%E0%A4%A?gate_key=test-gate')
   }).then(function (response) {
     assert.strictEqual(response.status, 400)
+    return post('/debug/screenshot?gate_key=test-gate&view=fm&zoom=1.2&width=720&height=1080', onePixelPng, { 'content-type': 'image/png' })
+  }).then(function (response) {
+    assert.strictEqual(response.status, 201)
+    var saved = fs.readdirSync(debugRoot)
+    assert.strictEqual(saved.filter(function (name) { return /-fm\.png$/.test(name) }).length, 1)
+    assert.strictEqual(saved.filter(function (name) { return /-fm\.json$/.test(name) }).length, 1)
+    return post('/debug/screenshot?gate_key=test-gate&view=fm', Buffer.from('not png'), { 'content-type': 'image/png' })
+  }).then(function (response) {
+    assert.strictEqual(response.status, 400)
     console.log('gateway tests passed')
   }).catch(function (error) {
     console.error(error.stack || error)
@@ -80,5 +114,6 @@ upstream.listen(apiPort, '127.0.0.1', function () {
   }).then(function () {
     gateway.kill()
     upstream.close()
+    fs.rmSync(debugRoot, { recursive: true, force: true })
   })
 })

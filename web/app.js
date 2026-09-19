@@ -12,6 +12,7 @@ var App = (function () {
     fmBuffer: [],
     quality: localStorage.getItem('ncm_quality') || 'exhigh',
   }
+  var debugCaptureTimer = null
 
   var ICON = {
     play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
@@ -32,6 +33,26 @@ var App = (function () {
   function applyZoom() {
     var z = parseFloat(localStorage.getItem('ncm_zoom') || '1')
     document.documentElement.style.zoom = String(z)
+  }
+
+  function debugEnabled() { return localStorage.getItem('ncm_debug_on') === '1' }
+  function applyDebugMode() {
+    var button = document.getElementById('debug-shot')
+    button.hidden = !(debugEnabled() && window.Android && window.Android.captureScreenshot)
+  }
+
+  function captureDebugScreenshot() {
+    var button = document.getElementById('debug-shot')
+    if (!window.Android || !window.Android.captureScreenshot) return
+    button.hidden = true
+    clearTimeout(debugCaptureTimer)
+    debugCaptureTimer = setTimeout(function () {
+      try {
+        window.Android.captureScreenshot(state.view, localStorage.getItem('ncm_zoom') || '1')
+      } catch (error) {
+        window.__debugCaptureDone(false)
+      }
+    }, 120)
   }
 
   function eachNode(nodes, fn) {
@@ -78,6 +99,7 @@ var App = (function () {
   // ---------- routing ----------
   function go(view) {
     state.view = view
+    applyDebugMode()
     eachNode(document.querySelectorAll('.nav-btn'), function (b) {
       toggleClass(b, 'active', b.getAttribute('data-view') === view)
     })
@@ -503,6 +525,7 @@ var App = (function () {
     document.getElementById('pb-prev').onclick = prev
     document.getElementById('pb-info').onclick = function () { go('nowplaying') }
     document.getElementById('pb-cover').onclick = function () { go('nowplaying') }
+    document.getElementById('debug-shot').onclick = captureDebugScreenshot
 
     audio.addEventListener('play', function () {
       setPlayIcon(document.getElementById('pb-play'), true)
@@ -594,6 +617,14 @@ var App = (function () {
     function renderZoom() { document.getElementById('zoom-val').textContent = Math.round(parseFloat(localStorage.getItem('ncm_zoom') || '1') * 100) + '%' }
     document.getElementById('zoom-minus').onclick = function () { localStorage.setItem('ncm_zoom', (parseFloat(localStorage.getItem('ncm_zoom') || '1') - 0.1).toFixed(2)); applyZoom(); renderZoom() }
     document.getElementById('zoom-plus').onclick = function () { localStorage.setItem('ncm_zoom', (parseFloat(localStorage.getItem('ncm_zoom') || '1') + 0.1).toFixed(2)); applyZoom(); renderZoom() }
+    var debugOn = debugEnabled()
+    var debugRow = el('<div class="set-row"><div><div>Debug 模式</div><div class="muted">在每个页面显示截图上传按钮</div></div><button id="debug-toggle" class="btn">' + (debugOn ? '已开' : '已关') + '</button></div>')
+    c.appendChild(debugRow)
+    document.getElementById('debug-toggle').onclick = function () {
+      localStorage.setItem('ncm_debug_on', debugEnabled() ? '0' : '1')
+      this.textContent = debugEnabled() ? '已开' : '已关'
+      applyDebugMode()
+    }
     var acct = el('<div class="set-row"><div class="acct"><img src=""></div>' +
       '<div><div id="set-name"></div><div id="set-uid" class="muted"></div></div>' +
       '<button class="btn" id="logout">退出登录</button></div>')
@@ -621,11 +652,16 @@ var App = (function () {
       return JSON.stringify({ playing: !audio.paused, title: t ? trackName(t) : '', artist: t ? trackArtist(t) : '', pic: t ? trackPic(t) : '' })
     },
   }
+  window.__debugCaptureDone = function () {
+    clearTimeout(debugCaptureTimer)
+    applyDebugMode()
+  }
 
   // ---------- init ----------
   function init() {
     applySafeBottom()
     applyZoom()
+    applyDebugMode()
     bind(); updateLoginBtn()
     if (API.isLogged()) {
       API.loginStatus().then(function (r) {

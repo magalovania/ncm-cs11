@@ -18,6 +18,9 @@ const API_PORT = Number(process.env.API_PORT) || 3000
 const API_HOST = process.env.API_HOST || '127.0.0.1'
 const PORT = Number(process.env.PORT) || 8080
 const GATE_KEY = process.env.GATE_KEY || ''
+const DEBUG_ROOT = path.resolve(process.env.DEBUG_ROOT || path.join(__dirname, 'debug-screenshots'))
+const MAX_SCREENSHOT_BYTES = 8 * 1024 * 1024
+const SCREENSHOT_VIEWS = new Set(['nowplaying', 'playlists', 'fm', 'search', 'login', 'settings'])
 
 const MIME = {
   '.html': 'text/html;charset=utf-8',
@@ -88,6 +91,78 @@ function gateDeny(req, res) {
   }
   res.writeHead(403, { 'content-type': 'text/html;charset=utf-8', 'cache-control': 'no-store' })
   res.end(GATE_PAGE)
+}
+
+function saveDebugScreenshot(req, res) {
+  const requestUrl = new URL(req.url, 'http://gateway.local')
+  const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase()
+  const length = Number(req.headers['content-length'])
+  const view = SCREENSHOT_VIEWS.has(requestUrl.searchParams.get('view')) ? requestUrl.searchParams.get('view') : 'unknown'
+  if (req.method !== 'POST' || contentType !== 'image/png' || !Number.isFinite(length) || length <= 0 || length > MAX_SCREENSHOT_BYTES) {
+    res.writeHead(400, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
+    return res.end('{"ok":false,"error":"invalid screenshot"}')
+  }
+
+  const chunks = []
+  let received = 0
+  let aborted = false
+  req.on('data', chunk => {
+    received += chunk.length
+    if (received > MAX_SCREENSHOT_BYTES) {
+      aborted = true
+      res.writeHead(413, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
+      res.end('{"ok":false,"error":"screenshot too large"}')
+      req.destroy()
+      return
+    }
+    chunks.push(chunk)
+  })
+  req.on('end', () => {
+    if (aborted) return
+    const body = Buffer.concat(chunks)
+    if (body.length !== length || body.length < 8 || body.toString('hex', 0, 8) !== '89504e470d0a1a0a') {
+      res.writeHead(400, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
+      return res.end('{"ok":false,"error":"invalid png"}')
+    }
+    fs.mkdir(DEBUG_ROOT, { recursive: true }, error => {
+      if (error) {
+        res.writeHead(500, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
+        return res.end('{"ok":false,"error":"write failed"}')
+      }
+      const id = new Date().toISOString().replace(/[-:.TZ]/g, '') + '-' + crypto.randomBytes(4).toString('hex')
+      const base = id + '-' + view
+      const metadata = {
+        id,
+        view,
+        zoom: safeMeta(requestUrl.searchParams.get('zoom')),
+        width: safeMeta(requestUrl.searchParams.get('width')),
+        height: safeMeta(requestUrl.searchParams.get('height')),
+        device: safeMeta(requestUrl.searchParams.get('device')),
+        android: safeMeta(requestUrl.searchParams.get('android')),
+        app: safeMeta(requestUrl.searchParams.get('app')),
+        createdAt: new Date().toISOString()
+      }
+      fs.writeFile(path.join(DEBUG_ROOT, base + '.png'), body, { flag: 'wx' }, imageError => {
+        if (imageError) {
+          res.writeHead(500, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
+          return res.end('{"ok":false,"error":"write failed"}')
+        }
+        fs.writeFile(path.join(DEBUG_ROOT, base + '.json'), JSON.stringify(metadata, null, 2), { flag: 'wx' }, metadataError => {
+          if (metadataError) {
+            fs.unlink(path.join(DEBUG_ROOT, base + '.png'), () => {})
+            res.writeHead(500, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
+            return res.end('{"ok":false,"error":"write failed"}')
+          }
+          res.writeHead(201, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
+          res.end(JSON.stringify({ ok: true, id, file: base + '.png' }))
+        })
+      })
+    })
+  })
+}
+
+function safeMeta(value) {
+  return String(value || '').replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 128)
 }
 
 function proxy(req, res) {
@@ -174,6 +249,7 @@ function serveStatic(req, res) {
 
 http.createServer((req, res) => {
   if (!gateOk(req)) return gateDeny(req, res)
+  if (req.url.startsWith('/debug/screenshot')) return saveDebugScreenshot(req, res)
   if (req.url.startsWith('/api/')) return proxy(req, res)
   return serveStatic(req, res)
 }).listen(PORT, '0.0.0.0', () => {

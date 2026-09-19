@@ -5,6 +5,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Build;
@@ -21,6 +23,11 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 /**
  * Full-screen WebView shell. Loads the server URL from SharedPreferences (so the car
  * can be repointed at a VPS without rebuilding). The native playback layer lives in
@@ -36,6 +43,7 @@ public class MainActivity extends Activity {
   private WebView web;
   private SharedPreferences prefs;
   private boolean errorShown = false;
+  private volatile boolean screenshotUploading = false;
   private static volatile MainActivity instance;
 
   @Override
@@ -202,6 +210,97 @@ public class MainActivity extends Activity {
         else web.loadUrl("javascript:" + js);
       }
     });
+  }
+
+  void captureScreenshot(final String viewName, final String zoom) {
+    if (screenshotUploading) {
+      Toast.makeText(this, "截图正在上传", Toast.LENGTH_SHORT).show();
+      return;
+    }
+    screenshotUploading = true;
+    runOnUiThread(new Runnable() {
+      @Override public void run() {
+        final int width = web.getWidth();
+        final int height = web.getHeight();
+        if (width <= 0 || height <= 0) {
+          finishScreenshot(false);
+          return;
+        }
+        try {
+          final Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+          web.draw(new Canvas(bitmap));
+          new Thread(new Runnable() {
+            @Override public void run() {
+              boolean success = false;
+              try {
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, bytes);
+                success = uploadScreenshot(bytes.toByteArray(), viewName, zoom, width, height);
+              } catch (Throwable ignored) {
+              } finally {
+                bitmap.recycle();
+                final boolean uploaded = success;
+                runOnUiThread(new Runnable() {
+                  @Override public void run() { finishScreenshot(uploaded); }
+                });
+              }
+            }
+          }, "ncm-screenshot-upload").start();
+        } catch (Throwable ignored) {
+          finishScreenshot(false);
+        }
+      }
+    });
+  }
+
+  private boolean uploadScreenshot(byte[] png, String viewName, String zoom, int width, int height) {
+    HttpURLConnection connection = null;
+    try {
+      Uri server = Uri.parse(currentUrl());
+      Uri endpoint = server.buildUpon()
+        .path("/debug/screenshot")
+        .clearQuery()
+        .appendQueryParameter("gate_key", currentGateKey())
+        .appendQueryParameter("view", safeMeta(viewName))
+        .appendQueryParameter("zoom", safeMeta(zoom))
+        .appendQueryParameter("width", String.valueOf(width))
+        .appendQueryParameter("height", String.valueOf(height))
+        .appendQueryParameter("device", Build.MODEL)
+        .appendQueryParameter("android", Build.VERSION.RELEASE)
+        .appendQueryParameter("app", appVersion())
+        .build();
+      connection = (HttpURLConnection) new URL(endpoint.toString()).openConnection();
+      connection.setConnectTimeout(20000);
+      connection.setReadTimeout(20000);
+      connection.setRequestMethod("POST");
+      connection.setDoOutput(true);
+      connection.setFixedLengthStreamingMode(png.length);
+      connection.setRequestProperty("Content-Type", "image/png");
+      OutputStream output = connection.getOutputStream();
+      output.write(png);
+      output.close();
+      return connection.getResponseCode() == 201;
+    } catch (Throwable ignored) {
+      return false;
+    } finally {
+      if (connection != null) connection.disconnect();
+    }
+  }
+
+  private static String safeMeta(String value) {
+    if (value == null) return "";
+    return value.length() > 64 ? value.substring(0, 64) : value;
+  }
+
+  private String appVersion() {
+    try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
+    catch (Throwable ignored) { return "unknown"; }
+  }
+
+  private void finishScreenshot(boolean success) {
+    screenshotUploading = false;
+    Toast.makeText(this, success ? "截图已上传" : "截图上传失败", Toast.LENGTH_SHORT).show();
+    evalJs("window.__debugCaptureDone&&window.__debugCaptureDone(" + success + ")");
   }
 
   static MainActivity getInstance() { return instance; }

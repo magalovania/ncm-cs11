@@ -1,6 +1,7 @@
 .git
 .gitignore
 docs
+server/debug-screenshots
 android
 CLAUDE.md
 .claude

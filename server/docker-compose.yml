@@ -21,6 +21,9 @@ services:
       # Access gate — put GATE_KEY=<your-password> in server/.env (gitignored).
       # Without it the gateway stays open (only for trusted networks / dev).
       GATE_KEY: "${GATE_KEY}"
+      DEBUG_ROOT: "/debug-screenshots"
+    volumes:
+      - ./debug-screenshots:/debug-screenshots
     depends_on:
       - api
     restart: unless-stopped

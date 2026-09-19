@@ -29,6 +29,7 @@ session/
 node_modules/
 server/api/
 _deploy/
+server/debug-screenshots/
 
 # --- Android ---
 android/.gradle/

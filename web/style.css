@@ -108,6 +108,9 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 .server-value{flex:1; text-align:right; color:#8b8b97; margin-left:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .muted{color:#5d5d68; font-size:15px; line-height:1.6}
 .loading,.empty{color:#5d5d68; text-align:center; padding:50px; font-size:17px}
+#debug-shot{position:fixed; right:18px; top:18px; z-index:80; height:42px; min-width:66px; padding:0 14px;
+  border:1px solid #ec4141; border-radius:8px; background:#211417; color:#ff6969; font-size:15px}
+#debug-shot:active{background:#ec4141; color:#fff}
 @supports not (display:flex) {
   #nav{position:fixed; left:0; top:0; bottom:0}
   #content{position:absolute; left:108px; right:0; top:0; bottom:0}

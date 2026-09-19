@@ -52,5 +52,10 @@ public class Bridge {
   }
 
   @JavascriptInterface
+  public void captureScreenshot(String viewName, String zoom) {
+    activity.captureScreenshot(viewName, zoom);
+  }
+
+  @JavascriptInterface
   public void log(String msg) { Log.d(TAG, "web: " + msg); }
 }
