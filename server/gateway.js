@@ -19,7 +19,7 @@ const API_HOST = process.env.API_HOST || '127.0.0.1'
 const PORT = Number(process.env.PORT) || 8080
 const GATE_KEY = process.env.GATE_KEY || ''
 const DEBUG_ROOT = path.resolve(process.env.DEBUG_ROOT || path.join(__dirname, 'debug-screenshots'))
-const MAX_SCREENSHOT_BYTES = 8 * 1024 * 1024
+const MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024
 const SCREENSHOT_VIEWS = new Set(['nowplaying', 'playlists', 'fm', 'search', 'login', 'settings'])
 
 const MIME = {
@@ -98,7 +98,7 @@ function saveDebugScreenshot(req, res) {
   const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase()
   const length = Number(req.headers['content-length'])
   const view = SCREENSHOT_VIEWS.has(requestUrl.searchParams.get('view')) ? requestUrl.searchParams.get('view') : 'unknown'
-  if (req.method !== 'POST' || contentType !== 'image/png' || !Number.isFinite(length) || length <= 0 || length > MAX_SCREENSHOT_BYTES) {
+  if (req.method !== 'POST' || contentType !== 'image/jpeg' || !Number.isFinite(length) || length <= 0 || length > MAX_SCREENSHOT_BYTES) {
     res.writeHead(400, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
     return res.end('{"ok":false,"error":"invalid screenshot"}')
   }
@@ -120,9 +120,9 @@ function saveDebugScreenshot(req, res) {
   req.on('end', () => {
     if (aborted) return
     const body = Buffer.concat(chunks)
-    if (body.length !== length || body.length < 8 || body.toString('hex', 0, 8) !== '89504e470d0a1a0a') {
+    if (body.length !== length || body.length < 4 || body[0] !== 0xff || body[1] !== 0xd8 || body[body.length - 2] !== 0xff || body[body.length - 1] !== 0xd9) {
       res.writeHead(400, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
-      return res.end('{"ok":false,"error":"invalid png"}')
+      return res.end('{"ok":false,"error":"invalid jpeg"}')
     }
     fs.mkdir(DEBUG_ROOT, { recursive: true }, error => {
       if (error) {
@@ -142,19 +142,19 @@ function saveDebugScreenshot(req, res) {
         app: safeMeta(requestUrl.searchParams.get('app')),
         createdAt: new Date().toISOString()
       }
-      fs.writeFile(path.join(DEBUG_ROOT, base + '.png'), body, { flag: 'wx' }, imageError => {
+      fs.writeFile(path.join(DEBUG_ROOT, base + '.jpg'), body, { flag: 'wx' }, imageError => {
         if (imageError) {
           res.writeHead(500, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
           return res.end('{"ok":false,"error":"write failed"}')
         }
         fs.writeFile(path.join(DEBUG_ROOT, base + '.json'), JSON.stringify(metadata, null, 2), { flag: 'wx' }, metadataError => {
           if (metadataError) {
-            fs.unlink(path.join(DEBUG_ROOT, base + '.png'), () => {})
+            fs.unlink(path.join(DEBUG_ROOT, base + '.jpg'), () => {})
             res.writeHead(500, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
             return res.end('{"ok":false,"error":"write failed"}')
           }
           res.writeHead(201, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
-          res.end(JSON.stringify({ ok: true, id, file: base + '.png' }))
+          res.end(JSON.stringify({ ok: true, id, file: base + '.jpg' }))
         })
       })
     })

@@ -11,7 +11,7 @@ var gatewayPort = 39502
 var apiPort = 39501
 var upstreamRequests = []
 var debugRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ncm-debug-'))
-var onePixelPng = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000000020001e221bc330000000049454e44ae426082', 'hex')
+var tinyJpeg = Buffer.from('ffd8ffe000104a46494600010100000100010000ffd9', 'hex')
 var upstream = http.createServer(function (request, response) {
   upstreamRequests.push({ url: request.url, cookie: request.headers.cookie || '' })
   var body = JSON.stringify({ code: 200, path: request.url })
@@ -98,13 +98,13 @@ upstream.listen(apiPort, '127.0.0.1', function () {
     return request('/%E0%A4%A?gate_key=test-gate')
   }).then(function (response) {
     assert.strictEqual(response.status, 400)
-    return post('/debug/screenshot?gate_key=test-gate&view=fm&zoom=1.2&width=720&height=1080', onePixelPng, { 'content-type': 'image/png' })
+    return post('/debug/screenshot?gate_key=test-gate&view=fm&zoom=1.2&width=720&height=1080', tinyJpeg, { 'content-type': 'image/jpeg' })
   }).then(function (response) {
     assert.strictEqual(response.status, 201)
     var saved = fs.readdirSync(debugRoot)
-    assert.strictEqual(saved.filter(function (name) { return /-fm\.png$/.test(name) }).length, 1)
+    assert.strictEqual(saved.filter(function (name) { return /-fm\.jpg$/.test(name) }).length, 1)
     assert.strictEqual(saved.filter(function (name) { return /-fm\.json$/.test(name) }).length, 1)
-    return post('/debug/screenshot?gate_key=test-gate&view=fm', Buffer.from('not png'), { 'content-type': 'image/png' })
+    return post('/debug/screenshot?gate_key=test-gate&view=fm', Buffer.from('not jpeg'), { 'content-type': 'image/jpeg' })
   }).then(function (response) {
     assert.strictEqual(response.status, 400)
     console.log('gateway tests passed')

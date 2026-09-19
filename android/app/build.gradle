@@ -10,8 +10,8 @@ android {
     applicationId "com.ncmcs11"
     minSdk 19
     targetSdk 34
-    versionCode 9
-    versionName "1.1.8"
+    versionCode 10
+    versionName "1.1.9"
   }
 
   sourceSets {

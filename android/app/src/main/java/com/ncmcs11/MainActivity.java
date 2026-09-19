@@ -39,6 +39,9 @@ public class MainActivity extends Activity {
   private static final String KEY_GATE = "gate_key";
   private static final String DEFAULT_URL = "http://192.168.31.187:8080";
   private static final String APP_PATH = "index.html";
+  private static final int DEBUG_SCREENSHOT_MAX_WIDTH = 1280;
+  private static final int DEBUG_SCREENSHOT_MAX_HEIGHT = 720;
+  private static final int DEBUG_SCREENSHOT_JPEG_QUALITY = 72;
 
   private WebView web;
   private SharedPreferences prefs;
@@ -232,12 +235,15 @@ public class MainActivity extends Activity {
           new Thread(new Runnable() {
             @Override public void run() {
               boolean success = false;
+              Bitmap uploadBitmap = null;
               try {
+                uploadBitmap = scaledScreenshot(bitmap);
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, bytes);
+                uploadBitmap.compress(Bitmap.CompressFormat.JPEG, DEBUG_SCREENSHOT_JPEG_QUALITY, bytes);
                 success = uploadScreenshot(bytes.toByteArray(), viewName, zoom, width, height);
               } catch (Throwable ignored) {
               } finally {
+                if (uploadBitmap != null && uploadBitmap != bitmap) uploadBitmap.recycle();
                 bitmap.recycle();
                 final boolean uploaded = success;
                 runOnUiThread(new Runnable() {
@@ -253,7 +259,7 @@ public class MainActivity extends Activity {
     });
   }
 
-  private boolean uploadScreenshot(byte[] png, String viewName, String zoom, int width, int height) {
+  private boolean uploadScreenshot(byte[] jpeg, String viewName, String zoom, int width, int height) {
     HttpURLConnection connection = null;
     try {
       Uri server = Uri.parse(currentUrl());
@@ -274,10 +280,10 @@ public class MainActivity extends Activity {
       connection.setReadTimeout(20000);
       connection.setRequestMethod("POST");
       connection.setDoOutput(true);
-      connection.setFixedLengthStreamingMode(png.length);
-      connection.setRequestProperty("Content-Type", "image/png");
+      connection.setFixedLengthStreamingMode(jpeg.length);
+      connection.setRequestProperty("Content-Type", "image/jpeg");
       OutputStream output = connection.getOutputStream();
-      output.write(png);
+      output.write(jpeg);
       output.close();
       return connection.getResponseCode() == 201;
     } catch (Throwable ignored) {
@@ -290,6 +296,18 @@ public class MainActivity extends Activity {
   private static String safeMeta(String value) {
     if (value == null) return "";
     return value.length() > 64 ? value.substring(0, 64) : value;
+  }
+
+  private static Bitmap scaledScreenshot(Bitmap source) {
+    int sourceWidth = source.getWidth();
+    int sourceHeight = source.getHeight();
+    float scale = Math.min(1.0f, Math.min(
+      DEBUG_SCREENSHOT_MAX_WIDTH / (float) sourceWidth,
+      DEBUG_SCREENSHOT_MAX_HEIGHT / (float) sourceHeight));
+    if (scale >= 1.0f) return source;
+    int width = Math.max(1, Math.round(sourceWidth * scale));
+    int height = Math.max(1, Math.round(sourceHeight * scale));
+    return Bitmap.createScaledBitmap(source, width, height, true);
   }
 
   private String appVersion() {
