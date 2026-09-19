@@ -23,5 +23,6 @@ requireMatch(app, /box\.scrollTop = Math\.max\(0, target\)/, 'isolated centered 
 requireMatch(css, /\.card\{display:inline-block;[^}]*width:170px;/, 'fixed playlist card width missing')
 requireMatch(css, /\.pb-controls\{width:216px;[^}]*text-align:center;/, 'bottom playback controls are not centered')
 requireMatch(css, /\.np-controls\{[^}]*text-align:center;/, 'now-playing controls are not centered')
+if (/Math\.(?:min|max)\([^\n]*ncm_zoom/.test(app)) throw new Error('zoom controls must not impose a range limit')
 
 console.log('Android 4.4 theme smoke test passed')

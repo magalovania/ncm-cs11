@@ -581,8 +581,8 @@ var App = (function () {
     var zoomRow = el('<div class="set-row"><div>界面缩放</div><div style="display:flex;align-items:center;gap:12px"><button id="zoom-minus" class="btn">-10%</button><span id="zoom-val" style="min-width:64px;text-align:center">' + Math.round(zoomCur * 100) + '%</span><button id="zoom-plus" class="btn">+10%</button></div></div>')
     c.appendChild(zoomRow)
     function renderZoom() { document.getElementById('zoom-val').textContent = Math.round(parseFloat(localStorage.getItem('ncm_zoom') || '1.5') * 100) + '%' }
-    document.getElementById('zoom-minus').onclick = function () { localStorage.setItem('ncm_zoom', Math.max(0.7, parseFloat(localStorage.getItem('ncm_zoom') || '1.5') - 0.1).toFixed(2)); applyZoom(); renderZoom() }
-    document.getElementById('zoom-plus').onclick = function () { localStorage.setItem('ncm_zoom', Math.min(1.5, parseFloat(localStorage.getItem('ncm_zoom') || '1.5') + 0.1).toFixed(2)); applyZoom(); renderZoom() }
+    document.getElementById('zoom-minus').onclick = function () { localStorage.setItem('ncm_zoom', (parseFloat(localStorage.getItem('ncm_zoom') || '1.5') - 0.1).toFixed(2)); applyZoom(); renderZoom() }
+    document.getElementById('zoom-plus').onclick = function () { localStorage.setItem('ncm_zoom', (parseFloat(localStorage.getItem('ncm_zoom') || '1.5') + 0.1).toFixed(2)); applyZoom(); renderZoom() }
     var acct = el('<div class="set-row"><div class="acct"><img src=""></div>' +
       '<div><div id="set-name"></div><div id="set-uid" class="muted"></div></div>' +
       '<button class="btn" id="logout">退出登录</button></div>')
