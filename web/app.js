@@ -167,6 +167,30 @@ var App = (function () {
     }
   }
 
+  function playlistCard(playlist) {
+    var card = el('<div class="card"></div>')
+    card.appendChild(imageNode('', API.httpsPic(playlist.coverImgUrl)))
+    var info = el('<div class="c-info"></div>')
+    info.appendChild(textNode('div', 'c-name', playlist.name))
+    info.appendChild(textNode('div', 'c-cnt', playlist.playCount
+      ? Math.round(playlist.playCount / 10000) + '万播放'
+      : (playlist.trackCount || 0) + ' 首'))
+    card.appendChild(info)
+    card.onclick = function () { renderPlaylistDetail(playlist.id, playlist.name) }
+    return card
+  }
+
+  function personalFmCard() {
+    var card = el('<div class="card fm-card"></div>')
+    card.appendChild(el('<div class="fm-card-cover"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.24 6.15C2.6 6.04 2 6.52 2 7.17V19c0 1.1.9 2 2 2h16c1.11 0 2-.9 2-2V7c0-1.1-.9-2-2-2H8.44l7.64-2.83L15.41 1 3.24 6.15zM7 19c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-8h-2v-2h-2v2H4V7h16v4z"/></svg></div>'))
+    var info = el('<div class="c-info"></div>')
+    info.appendChild(textNode('div', 'c-name', '私人 FM'))
+    info.appendChild(textNode('div', 'c-cnt', '为你连续推荐'))
+    card.appendChild(info)
+    card.onclick = startFm
+    return card
+  }
+
   // ---------- playlists ----------
   function renderPlaylists() {
     var c = document.getElementById('content'); empty(c)
@@ -178,14 +202,7 @@ var App = (function () {
       if (!list.length) { c.appendChild(el('<div class="empty">没有歌单</div>')); return }
       var grid = el('<div class="grid"></div>')
       list.forEach(function (pl) {
-        var card = el('<div class="card"></div>')
-        card.appendChild(imageNode('', API.httpsPic(pl.coverImgUrl)))
-        var info = el('<div class="c-info"></div>')
-        info.appendChild(textNode('div', 'c-name', pl.name))
-        info.appendChild(textNode('div', 'c-cnt', (pl.trackCount || 0) + ' 首'))
-        card.appendChild(info)
-        card.onclick = function () { renderPlaylistDetail(pl.id, pl.name) }
-        grid.appendChild(card)
+        grid.appendChild(playlistCard(pl))
       })
       c.appendChild(grid)
     }).catch(function (e) {
@@ -228,33 +245,10 @@ var App = (function () {
     var c = document.getElementById('content'); empty(c)
     var bar = el('<div class="search-bar"><input id="skw" placeholder="搜索歌曲/歌手"><button id="sgo">搜索</button></div>')
     c.appendChild(bar)
-    var recHead = el('<div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 14px"><h2 style="margin:0">推荐歌单</h2><button id="rec-refresh" class="btn">换一换</button></div>')
-    c.appendChild(recHead)
-    var recGrid = el('<div class="grid" id="rec-grid"></div>')
-    c.appendChild(recGrid)
     var resHead = el('<h2 id="res-head" style="display:none;margin:20px 0 14px">搜索结果</h2>')
     c.appendChild(resHead)
     var results = el('<div class="list" id="sres"></div>')
     c.appendChild(results)
-    function loadRecs() {
-      var grid = document.getElementById('rec-grid'); if (!grid) return
-      empty(grid); grid.appendChild(el('<div class="loading">加载中…</div>'))
-      API.topPlaylist(Math.floor(Math.random() * 200), 12).then(function (r) {
-        var list = r.playlists || []
-        empty(grid)
-        if (!list.length) { grid.appendChild(el('<div class="empty">暂无推荐</div>')); return }
-        list.forEach(function (pl) {
-          var card = el('<div class="card"></div>')
-          card.appendChild(imageNode('', API.httpsPic(pl.coverImgUrl)))
-          var info = el('<div class="c-info"></div>')
-          info.appendChild(textNode('div', 'c-name', pl.name))
-          info.appendChild(textNode('div', 'c-cnt', pl.playCount ? Math.round(pl.playCount / 10000) + '万播放' : (pl.trackCount || 0) + ' 首'))
-          card.appendChild(info)
-          card.onclick = function () { renderPlaylistDetail(pl.id, pl.name) }
-          grid.appendChild(card)
-        })
-      }).catch(function () { empty(grid); grid.appendChild(el('<div class="empty">加载失败，点换一换重试</div>')) })
-    }
     function doSearch() {
       var kw = document.getElementById('skw').value.trim()
       if (!kw) return
@@ -276,8 +270,6 @@ var App = (function () {
         })
       }).catch(function (e) { empty(results); results.appendChild(textNode('div', 'empty', e.message)) })
     }
-    loadRecs()
-    document.getElementById('rec-refresh').onclick = loadRecs
     document.getElementById('sgo').onclick = doSearch
     document.getElementById('skw').addEventListener('keydown', function (e) { if (e.key === 'Enter') doSearch() })
   }
@@ -285,10 +277,29 @@ var App = (function () {
   // ---------- private FM ----------
   function renderFm() {
     var c = document.getElementById('content'); empty(c)
-    c.appendChild(el('<h2>私人 FM</h2>'))
-    var wrap = el('<div class="fm-landing"><div class="fm-badge"><svg viewBox="0 0 24 24" width="64" height="64" fill="currentColor"><path d="M3.24 6.15C2.6 6.04 2 6.52 2 7.17V19c0 1.1.9 2 2 2h16c1.11 0 2-.9 2-2V7c0-1.1-.9-2-2-2H8.44l7.64-2.83L15.41 1 3.24 6.15zM7 19c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-8h-2v-2h-2v2H4V7h16v4z"/></svg></div><div class="fm-tip">根据你的口味推荐单曲，一直播一直推。<br>点「开始播放」将切换到 FM 模式（覆盖当前播放）。</div><button id="fm-start" class="btn big-start">开始播放</button></div>')
-    c.appendChild(wrap)
-    document.getElementById('fm-start').onclick = startFm
+    var head = el('<div class="section-head"><h2>推荐歌单</h2><button id="fm-refresh" class="btn">换一换</button></div>')
+    var grid = el('<div class="grid" id="fm-grid"></div>')
+    c.appendChild(head)
+    c.appendChild(grid)
+
+    function loadRecommendations() {
+      empty(grid)
+      grid.appendChild(personalFmCard())
+      grid.appendChild(el('<div class="loading fm-loading">加载中…</div>'))
+      API.topPlaylist(Math.floor(Math.random() * 200), 11).then(function (response) {
+        var playlists = response.playlists || []
+        empty(grid)
+        grid.appendChild(personalFmCard())
+        playlists.forEach(function (playlist) { grid.appendChild(playlistCard(playlist)) })
+      }).catch(function () {
+        empty(grid)
+        grid.appendChild(personalFmCard())
+        grid.appendChild(el('<div class="empty fm-loading">加载失败，点换一换重试</div>'))
+      })
+    }
+
+    document.getElementById('fm-refresh').onclick = loadRecommendations
+    loadRecommendations()
   }
   function startFm() {
     var c = document.getElementById('content'); empty(c)
