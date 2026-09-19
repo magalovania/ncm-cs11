@@ -19,6 +19,11 @@ if (app.indexOf("localStorage.getItem('ncm_debug_on') === '1'") < 0
   throw new Error('debug mode or screenshot bridge missing')
 }
 
+if (app.indexOf("button.style.display = 'none'") < 0
+  || app.indexOf("getElementById('debug-shot').style.display = ''") < 0) {
+  throw new Error('debug button must be removed from the captured frame')
+}
+
 if (activity.indexOf('Bitmap.CompressFormat.JPEG') < 0
   || activity.indexOf('DEBUG_SCREENSHOT_JPEG_QUALITY = 72') < 0
   || activity.indexOf('DEBUG_SCREENSHOT_MAX_WIDTH = 1280') < 0

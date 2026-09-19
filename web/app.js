@@ -45,6 +45,7 @@ var App = (function () {
     var button = document.getElementById('debug-shot')
     if (!window.Android || !window.Android.captureScreenshot) return
     button.hidden = true
+    button.style.display = 'none'
     clearTimeout(debugCaptureTimer)
     debugCaptureTimer = setTimeout(function () {
       try {
@@ -103,6 +104,8 @@ var App = (function () {
     eachNode(document.querySelectorAll('.nav-btn'), function (b) {
       toggleClass(b, 'active', b.getAttribute('data-view') === view)
     })
+    var content = document.getElementById('content')
+    content.scrollTop = 0
     if (view === 'login') return renderLogin()
     if (!API.isLogged()) { return renderLogin() }
     if (view === 'nowplaying') renderNowPlaying()
@@ -654,6 +657,7 @@ var App = (function () {
   }
   window.__debugCaptureDone = function () {
     clearTimeout(debugCaptureTimer)
+    document.getElementById('debug-shot').style.display = ''
     applyDebugMode()
   }
 

@@ -25,6 +25,10 @@ requireMatch(css, /\.pb-controls\{position:absolute;[^}]*width:216px;[^}]*text-a
 requireMatch(css, /\.np-controls\{[^}]*text-align:center;/, 'now-playing controls are not centered')
 requireMatch(css, /#pb-info\{position:absolute;[^}]*top:50%;[^}]*translateY\(-50%\)/, 'bottom track text is not vertically centered')
 requireMatch(css, /#pb-progress\{position:absolute;[^}]*top:50%;[^}]*translateY\(-50%\)/, 'bottom progress text is not vertically centered')
+requireMatch(css, /#player-bar\{position:fixed; left:124px;/, 'bottom player must start after the legacy navigation rail')
+requireMatch(css, /\.np-right\{position:absolute; left:286px; right:0;/, 'lyrics column must fill the remaining width')
+requireMatch(css, /\.np-lyric::before,\.np-lyric::after\{[^}]*height:42%/, 'lyric centering spacers missing')
+requireMatch(app, /content\.scrollTop = 0/, 'tab navigation must reset content scroll')
 if (/Math\.(?:min|max)\([^\n]*ncm_zoom/.test(app)) throw new Error('zoom controls must not impose a range limit')
 
 console.log('Android 4.4 theme smoke test passed')

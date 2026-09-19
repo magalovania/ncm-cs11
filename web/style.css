@@ -46,7 +46,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 .fm-loading{display:inline-block; width:170px; vertical-align:top; padding:70px 10px; font-size:17px}
 
 /* ---------- player bar ---------- */
-#player-bar{position:fixed; left:108px; right:0; bottom:20px; height:92px; z-index:40;
+#player-bar{position:fixed; left:124px; right:0; bottom:20px; height:92px; z-index:40;
   background:rgba(20,20,26,.96); border-top:1px solid #2a2a33}
 #player-bar:not([hidden]){display:block}
 #pb-bar{position:absolute; left:0; top:0; right:0; height:3px; background:#2a2a33}
@@ -69,20 +69,21 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 .btn svg{width:24px; height:24px; fill:currentColor}
 
 /* ---------- now playing view (routed, fills content area; left=cover+controls, right=lyrics) ---------- */
-.np-view{display:flex; gap:48px; height:100%; min-height:0; overflow:hidden; align-items:stretch}
-.np-left{width:250px; max-width:42%; flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center}
-#np-cover{width:220px; max-width:100%; height:220px; border-radius:22px; object-fit:cover; background:#26262f; box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.np-view{position:relative; height:100%; min-height:0; overflow:hidden}
+.np-left{position:absolute; left:0; top:0; bottom:0; width:270px}
+#np-cover{position:absolute; left:15px; top:12px; width:220px; height:220px; border-radius:22px; object-fit:cover; background:#26262f; box-shadow:0 24px 60px rgba(0,0,0,.55)}
 .np-left .np-times{display:flex; justify-content:space-between; width:100%; color:#8b8b97; font-size:15px; font-variant-numeric:tabular-nums}
-#np-seek{-webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:3px; background:#2a2a33; outline:none}
+.np-left .np-times{position:absolute; left:15px; top:242px; width:220px}
+#np-seek{position:absolute; left:15px; top:274px; -webkit-appearance:none; appearance:none; width:220px; height:6px; border-radius:3px; background:#2a2a33; outline:none}
 #np-seek::-webkit-slider-thumb{-webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#ec4141; box-shadow:0 2px 8px rgba(0,0,0,.4)}
-.np-left .np-times,#np-seek,.np-controls{margin-top:16px}
-.np-controls{width:100%; text-align:center; white-space:nowrap}
+.np-controls{position:absolute; left:0; top:304px; width:250px; text-align:center; white-space:nowrap}
 .np-controls .ctrl+.ctrl{margin-left:16px}
-.np-right{flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; padding:0 8px}
-.np-head{flex:none; background:#0e0e12; padding:14px 8px 16px; margin:0 -8px; border-bottom:1px solid #2a2a33}
+.np-right{position:absolute; left:286px; right:0; top:0; bottom:0; overflow:hidden; padding:0 8px}
+.np-head{position:absolute; left:0; right:0; top:0; height:92px; background:#0e0e12; padding:14px 8px 16px; border-bottom:1px solid #2a2a33}
 #np-title{font-size:28px; font-weight:700; line-height:1.25}
 #np-artist{color:#8b8b97; font-size:20px; margin-top:6px}
-.np-lyric{flex:1; min-height:0; overflow-y:auto; color:#8b8b97; font-size:20px; line-height:2.1; text-align:center; padding:45% 6px}
+.np-lyric{position:absolute; left:0; right:0; top:92px; bottom:0; overflow-y:auto; color:#8b8b97; font-size:20px; line-height:2.1; text-align:center; padding:0 6px}
+.np-lyric::before,.np-lyric::after{content:""; display:block; height:42%}
 .np-lyric .cur{color:#fff; font-size:24px; font-weight:600}
 
 /* ---------- login ---------- */
@@ -123,10 +124,6 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
   #player-bar:not([hidden]){display:block}
   .pb-controls>*{display:inline-block; vertical-align:middle}
   .pb-controls .ctrl+.ctrl{margin-left:18px}
-  .np-left,.np-right{display:inline-block; vertical-align:top}
-  .np-right{position:relative; width:50%; height:100%}
-  .np-head{position:absolute; left:0; right:0; top:0; height:100px; z-index:2}
-  .np-lyric{position:absolute; left:0; right:0; top:100px; bottom:0; padding:45% 6px; overflow-y:auto}
   .np-controls .ctrl+.ctrl{margin-left:16px}
 }
 
@@ -140,7 +137,3 @@ html.legacy-webview #player-bar:not([hidden]){display:block}
 html.legacy-webview .pb-controls>*{display:inline-block; vertical-align:middle}
 html.legacy-webview .pb-controls .ctrl+.ctrl{margin-left:18px}
 html.legacy-webview .np-view{display:block; position:relative}
-html.legacy-webview .np-left{display:inline-block; vertical-align:top; width:250px; max-width:42%}
-html.legacy-webview .np-right{display:inline-block; position:relative; vertical-align:top; width:50%; height:100%}
-html.legacy-webview .np-head{position:absolute; left:0; right:0; top:0; height:100px; z-index:2}
-html.legacy-webview .np-lyric{position:absolute; left:0; right:0; top:100px; bottom:0; padding:45% 6px; overflow-y:auto}
