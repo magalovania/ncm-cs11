@@ -30,7 +30,7 @@ var App = (function () {
     document.getElementById('player-bar').style.bottom = safe
   }
   function applyZoom() {
-    var z = parseFloat(localStorage.getItem('ncm_zoom') || '1')
+    var z = parseFloat(localStorage.getItem('ncm_zoom') || '1.5')
     document.documentElement.style.zoom = String(z)
   }
 
@@ -226,7 +226,7 @@ var App = (function () {
   // ---------- search ----------
   function renderSearch() {
     var c = document.getElementById('content'); empty(c)
-    var bar = el('<div class="search-bar"><input id="skw" placeholder="搜索歌曲/歌手" autofocus><button id="sgo">搜索</button></div>')
+    var bar = el('<div class="search-bar"><input id="skw" placeholder="搜索歌曲/歌手"><button id="sgo">搜索</button></div>')
     c.appendChild(bar)
     var recHead = el('<div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 14px"><h2 style="margin:0">推荐歌单</h2><button id="rec-refresh" class="btn">换一换</button></div>')
     c.appendChild(recHead)
@@ -459,7 +459,7 @@ var App = (function () {
     var c = document.getElementById('content'); empty(c)
     var t = cur()
     if (!t) { c.appendChild(el('<h2>当前播放</h2>')); c.appendChild(el('<div class="empty">没有正在播放的曲目，去歌单点一首吧</div>')); return }
-    var view = el('<div class="np-view"><div class="np-left"><img id="np-cover" alt=""><div class="np-times"><span id="np-cur">0:00</span><span id="np-dur">0:00</span></div><input id="np-seek" type="range" min="0" max="1000" value="0"><div class="np-controls"><button id="np-prev" class="ctrl big">⏮</button><button id="np-play" class="ctrl big">▶</button><button id="np-next" class="ctrl big">⏭</button></div></div><div class="np-right"><div class="np-head"><div id="np-title"></div><div id="np-artist"></div></div><div id="np-lyric" class="np-lyric"></div></div></div>')
+    var view = el('<div class="np-view"><div class="np-left"><img id="np-cover" alt=""><div class="np-times"><span id="np-cur">0:00</span><span id="np-dur">0:00</span></div><input id="np-seek" type="range" min="0" max="1000" value="0"><div class="np-controls"><button id="np-prev" class="ctrl big"></button><button id="np-play" class="ctrl big"></button><button id="np-next" class="ctrl big"></button></div></div><div class="np-right"><div class="np-head"><div id="np-title"></div><div id="np-artist"></div></div><div id="np-lyric" class="np-lyric"></div></div></div>')
     c.appendChild(view)
     var ncv = document.getElementById('np-cover'); var npic = trackPic(t)
     if (npic) { ncv.src = npic; ncv.style.visibility = 'visible' } else { ncv.removeAttribute('src'); ncv.style.visibility = 'hidden' }
@@ -536,8 +536,9 @@ var App = (function () {
     box._active = active
     Array.prototype.forEach.call(box.children, function (d, i) { d.className = i === active ? 'cur' : '' })
     if (active >= 0 && box.children[active]) {
-      try { box.children[active].scrollIntoView({ block: 'center', behavior: 'smooth' }) }
-      catch (e) { box.children[active].scrollIntoView(false) }
+      var line = box.children[active]
+      var target = line.offsetTop - (box.clientHeight - line.offsetHeight) / 2
+      box.scrollTop = Math.max(0, target)
     }
   }
 
@@ -576,12 +577,12 @@ var App = (function () {
     document.getElementById('safe-toggle').onclick = function () { localStorage.setItem('ncm_safe_bottom_on', localStorage.getItem('ncm_safe_bottom_on') === '0' ? '1' : '0'); applySafeBottom(); renderSafe() }
     document.getElementById('safe-minus').onclick = function () { localStorage.setItem('ncm_safe_bottom', String(Math.max(0, parseInt(localStorage.getItem('ncm_safe_bottom') || '20', 10) - 10))); applySafeBottom(); renderSafe() }
     document.getElementById('safe-plus').onclick = function () { localStorage.setItem('ncm_safe_bottom', String(parseInt(localStorage.getItem('ncm_safe_bottom') || '20', 10) + 10)); applySafeBottom(); renderSafe() }
-    var zoomCur = parseFloat(localStorage.getItem('ncm_zoom') || '1')
+    var zoomCur = parseFloat(localStorage.getItem('ncm_zoom') || '1.5')
     var zoomRow = el('<div class="set-row"><div>界面缩放</div><div style="display:flex;align-items:center;gap:12px"><button id="zoom-minus" class="btn">-10%</button><span id="zoom-val" style="min-width:64px;text-align:center">' + Math.round(zoomCur * 100) + '%</span><button id="zoom-plus" class="btn">+10%</button></div></div>')
     c.appendChild(zoomRow)
-    function renderZoom() { document.getElementById('zoom-val').textContent = Math.round(parseFloat(localStorage.getItem('ncm_zoom') || '1') * 100) + '%' }
-    document.getElementById('zoom-minus').onclick = function () { localStorage.setItem('ncm_zoom', Math.max(0.7, parseFloat(localStorage.getItem('ncm_zoom') || '1') - 0.1).toFixed(2)); applyZoom(); renderZoom() }
-    document.getElementById('zoom-plus').onclick = function () { localStorage.setItem('ncm_zoom', Math.min(1.5, parseFloat(localStorage.getItem('ncm_zoom') || '1') + 0.1).toFixed(2)); applyZoom(); renderZoom() }
+    function renderZoom() { document.getElementById('zoom-val').textContent = Math.round(parseFloat(localStorage.getItem('ncm_zoom') || '1.5') * 100) + '%' }
+    document.getElementById('zoom-minus').onclick = function () { localStorage.setItem('ncm_zoom', Math.max(0.7, parseFloat(localStorage.getItem('ncm_zoom') || '1.5') - 0.1).toFixed(2)); applyZoom(); renderZoom() }
+    document.getElementById('zoom-plus').onclick = function () { localStorage.setItem('ncm_zoom', Math.min(1.5, parseFloat(localStorage.getItem('ncm_zoom') || '1.5') + 0.1).toFixed(2)); applyZoom(); renderZoom() }
     var acct = el('<div class="set-row"><div class="acct"><img src=""></div>' +
       '<div><div id="set-name"></div><div id="set-uid" class="muted"></div></div>' +
       '<button class="btn" id="logout">退出登录</button></div>')

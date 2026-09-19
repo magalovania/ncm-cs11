@@ -15,7 +15,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 .nav-btn.active{background:rgba(236,65,65,.14); color:#ec4141; font-weight:600}
 .nav-login{margin-top:auto; width:60px; height:60px; padding:0; display:flex; align-items:center; justify-content:center; overflow:hidden}
 .nav-avatar{width:46px; height:46px; border-radius:50%; object-fit:cover; background:#26262f}
-#content{flex:1; overflow-y:auto; padding:22px 26px 130px}
+#content{flex:1; min-width:0; overflow-y:auto; padding:22px 26px 130px}
 #content h2{font-size:26px; font-weight:700; margin:2px 0 18px; letter-spacing:.5px}
 
 /* ---------- list rows ---------- */
@@ -30,8 +30,9 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 .row.playing .ttl{color:#ec4141}
 
 /* ---------- playlist grid ---------- */
-.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:18px}
-.card{background:#1b1b22; border-radius:16px; overflow:hidden; border:1px solid #2a2a33; transition:.15s}
+.grid{font-size:0}
+.card{display:inline-block; vertical-align:top; width:170px; margin:0 18px 18px 0; font-size:19px;
+  background:#1b1b22; border-radius:16px; overflow:hidden; border:1px solid #2a2a33; transition:.15s}
 .card:active{transform:scale(.98); border-color:#ec4141}
 .card img{width:100%; aspect-ratio:1; object-fit:cover; display:block; background:#26262f}
 .card .c-info{padding:12px 12px 14px}
@@ -40,8 +41,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 
 /* ---------- player bar ---------- */
 #player-bar{position:fixed; left:108px; right:0; bottom:20px; height:92px; z-index:40;
-  background:rgba(20,20,26,.96); border-top:1px solid #2a2a33;
-  align-items:center; gap:18px; padding:0 22px}
+  background:rgba(20,20,26,.96); border-top:1px solid #2a2a33; padding:0 22px}
 #player-bar:not([hidden]){display:flex}
 #pb-bar{position:absolute; left:0; top:0; right:0; height:3px; background:#2a2a33}
 #pb-fill{display:block; height:100%; width:0; background:#ec4141; transition:width .2s linear}
@@ -51,28 +51,32 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 #pb-artist{color:#8b8b97; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 #pb-progress{color:#5d5d68; font-size:15px; font-variant-numeric:tabular-nums; white-space:nowrap}
 .ctrl{width:60px; height:60px; border-radius:50%; background:#26262f; color:#f2f2f5;
-  display:flex; align-items:center; justify-content:center; transition:.12s}
+  display:inline-block; vertical-align:middle; transition:.12s}
 .ctrl:active{background:#ec4141; color:#fff; transform:scale(.94)}
-.ctrl.big{width:84px; height:84px}
-.ctrl svg{width:50%; height:50%; fill:currentColor}
+.ctrl.big{width:64px; height:64px}
+.ctrl svg{display:block; width:50%; height:50%; margin:auto; fill:currentColor}
+.pb-controls{width:216px; flex:none; text-align:center; white-space:nowrap}
+.pb-controls .ctrl+.ctrl{margin-left:18px}
 .btn{height:56px; border-radius:14px; background:#26262f; color:#f2f2f5; padding:0 22px; font-size:18px;
   display:inline-flex; align-items:center; justify-content:center; gap:10px; transition:.12s}
 .btn:active{background:#ec4141; color:#fff}
 .btn svg{width:24px; height:24px; fill:currentColor}
 
 /* ---------- now playing view (routed, fills content area; left=cover+controls, right=lyrics) ---------- */
-.np-view{display:flex; gap:48px; height:100%; align-items:stretch}
-.np-left{width:42vh; max-width:320px; flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px}
-#np-cover{width:100%; height:auto; border-radius:22px; object-fit:cover; background:#26262f; box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.np-view{display:flex; gap:48px; height:100%; min-height:0; overflow:hidden; align-items:stretch}
+.np-left{width:250px; max-width:42%; flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center}
+#np-cover{width:220px; max-width:100%; height:220px; border-radius:22px; object-fit:cover; background:#26262f; box-shadow:0 24px 60px rgba(0,0,0,.55)}
 .np-left .np-times{display:flex; justify-content:space-between; width:100%; color:#8b8b97; font-size:15px; font-variant-numeric:tabular-nums}
 #np-seek{-webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:3px; background:#2a2a33; outline:none}
 #np-seek::-webkit-slider-thumb{-webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#ec4141; box-shadow:0 2px 8px rgba(0,0,0,.4)}
-.np-controls{display:flex; gap:26px; justify-content:center; width:100%}
-.np-right{flex:1; min-width:0; overflow-y:auto; padding:0 8px 30px}
-.np-head{position:sticky; top:0; z-index:2; background:#0e0e12; padding:14px 8px 16px; margin:0 -8px 14px; border-bottom:1px solid #2a2a33}
+.np-left .np-times,#np-seek,.np-controls{margin-top:16px}
+.np-controls{width:100%; text-align:center; white-space:nowrap}
+.np-controls .ctrl+.ctrl{margin-left:16px}
+.np-right{flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; padding:0 8px}
+.np-head{flex:none; background:#0e0e12; padding:14px 8px 16px; margin:0 -8px; border-bottom:1px solid #2a2a33}
 #np-title{font-size:28px; font-weight:700; line-height:1.25}
 #np-artist{color:#8b8b97; font-size:20px; margin-top:6px}
-.np-lyric{color:#8b8b97; font-size:20px; line-height:2.1; text-align:center; padding:10px 6px}
+.np-lyric{flex:1; min-height:0; overflow-y:auto; color:#8b8b97; font-size:20px; line-height:2.1; text-align:center; padding:45% 6px}
 .np-lyric .cur{color:#fff; font-size:24px; font-weight:600}
 
 /* ---------- login ---------- */
@@ -113,11 +117,35 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
   .nav-login{position:absolute; left:24px; bottom:20px}
   .row>*{display:inline-block; vertical-align:middle}
   .grid{display:block}
-  .card{display:inline-block; vertical-align:top; width:30%; margin:1.5%}
+  .card{display:inline-block; vertical-align:top; width:170px; margin:0 18px 18px 0}
   .card img{height:170px}
-  #player-bar:not([hidden]){display:block; padding-top:14px}
+  #player-bar:not([hidden]){display:block; padding-top:14px; white-space:nowrap}
   #player-bar>*{display:inline-block; vertical-align:middle; margin-right:14px}
   #pb-info{width:35%}
+  .pb-controls{display:inline-block; white-space:nowrap}
+  .pb-controls>*{display:inline-block; vertical-align:middle}
+  .pb-controls .ctrl+.ctrl{margin-left:18px}
   .np-left,.np-right{display:inline-block; vertical-align:top}
-  .np-right{width:50%; height:100%}
+  .np-right{position:relative; width:50%; height:100%}
+  .np-head{position:absolute; left:0; right:0; top:0; height:100px; z-index:2}
+  .np-lyric{position:absolute; left:0; right:0; top:100px; bottom:0; padding:45% 6px; overflow-y:auto}
+  .np-controls .ctrl+.ctrl{margin-left:16px}
 }
+
+html.legacy-webview #app{display:block; position:relative}
+html.legacy-webview #nav{position:fixed; left:0; top:0; bottom:0; display:block; width:124px; padding:14px 8px 34px}
+html.legacy-webview #content{position:absolute; left:124px; right:0; top:0; bottom:0}
+html.legacy-webview .nav-logo{display:block; margin:0 24px 10px}
+html.legacy-webview .nav-btn{display:block; margin:10px 8px}
+html.legacy-webview .nav-login{position:absolute; left:32px; bottom:20px}
+html.legacy-webview #player-bar:not([hidden]){display:block; padding-top:14px; white-space:nowrap}
+html.legacy-webview #player-bar>*{display:inline-block; vertical-align:middle; margin-right:14px}
+html.legacy-webview #pb-info{width:35%}
+html.legacy-webview .pb-controls{display:inline-block; white-space:nowrap}
+html.legacy-webview .pb-controls>*{display:inline-block; vertical-align:middle}
+html.legacy-webview .pb-controls .ctrl+.ctrl{margin-left:18px}
+html.legacy-webview .np-view{display:block; position:relative}
+html.legacy-webview .np-left{display:inline-block; vertical-align:top; width:250px; max-width:42%}
+html.legacy-webview .np-right{display:inline-block; position:relative; vertical-align:top; width:50%; height:100%}
+html.legacy-webview .np-head{position:absolute; left:0; right:0; top:0; height:100px; z-index:2}
+html.legacy-webview .np-lyric{position:absolute; left:0; right:0; top:100px; bottom:0; padding:45% 6px; overflow-y:auto}

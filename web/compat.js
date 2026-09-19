@@ -1,6 +1,10 @@
 (function () {
   'use strict'
 
+  if (/Android 4\./.test(navigator.userAgent)) {
+    document.documentElement.className += ' legacy-webview'
+  }
+
   function PromisePolyfill(executor) {
     if (!(this instanceof PromisePolyfill)) throw new TypeError('Promises must be constructed')
     if (typeof executor !== 'function') throw new TypeError('executor is not a function')
