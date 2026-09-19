@@ -23,7 +23,7 @@ requireMatch(app, /box\.scrollTop = Math\.max\(0, target\)/, 'isolated centered 
 requireMatch(css, /\.card\{display:inline-block;[^}]*width:170px;/, 'fixed playlist card width missing')
 requireMatch(css, /\.pb-controls\{position:absolute;[^}]*width:216px;[^}]*text-align:center;/, 'bottom playback controls are not centered')
 requireMatch(css, /\.np-controls\{[^}]*text-align:center;/, 'now-playing controls are not centered')
-requireMatch(css, /#pb-info\{position:absolute;[^}]*top:50%;[^}]*translateY\(-50%\)/, 'bottom track text is not vertically centered')
+requireMatch(css, /#pb-info\{position:absolute;[^}]*top:22px;[^}]*height:48px;/, 'bottom track text needs deterministic vertical centering')
 requireMatch(css, /#pb-progress\{position:absolute;[^}]*top:50%;[^}]*translateY\(-50%\)/, 'bottom progress text is not vertically centered')
 requireMatch(css, /#player-bar\{position:fixed; left:124px;/, 'bottom player must start after the legacy navigation rail')
 requireMatch(css, /\.np-right\{position:absolute; left:286px; right:0;/, 'lyrics column must fill the remaining width')
