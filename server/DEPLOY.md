@@ -74,12 +74,23 @@ gcloud compute scp <实例名>:~/ncm-cs11/server/debug-screenshots/<文件名>.j
 
 若车机提示“截图上传失败”，依次检查：
 
-1. VPS 是否已部署 v1.1.9 对应网关：`grep -n 'image/jpeg' ~/ncm-cs11/server/gateway.js`。
+1. VPS 是否已部署包含截图端点的新网关：`grep -n 'image/jpeg' ~/ncm-cs11/server/gateway.js`。
 2. Web 容器是否已重建：`cd ~/ncm-cs11/server && sudo docker compose up -d --build web`。
 3. `server/debug-screenshots/` 是否存在且 Docker 可写；Compose 会自动挂载该目录。
 4. APK 中的后端地址与访问口令是否和 VPS 当前 `GATE_KEY` 一致。
+5. feedback APK 是否为 `assembleFeedback` 产物，且 VPS `.env` 中 `DEBUG_UPLOAD_ENABLED=true`。
 
 已验证样例：真机 `JAD-AL50`、Android 12、页面 `settings`、缩放 70%、原始尺寸 2597×1118，压缩后 JPEG 约 29KB，公网上传成功。
+
+调试结束后执行以下操作关闭入口：
+
+```bash
+cd ~/ncm-cs11/server
+sed -i 's/^DEBUG_UPLOAD_ENABLED=.*/DEBUG_UPLOAD_ENABLED=false/' .env
+sudo docker compose up -d --force-recreate web
+```
+
+关闭后 `/debug/screenshot` 返回 404。当前维护者 VPS 已处于关闭状态。
 
 ## 460 cheating（海外部署必看）
 网易对「非中国大陆 IP」的请求返回 `460 cheating`。本地（国内 IP）没事；**部署到 GCP 美区 / 港 VPS 必撞**，取歌登录全挂。

@@ -65,7 +65,7 @@ node server/gateway.js             # → :8080
 
 - 前置：JDK 17+ 与 Android SDK（`android/local.properties` 写 `sdk.dir=<SDK 路径>`，或设 `ANDROID_HOME` 环境变量）
 - 构建：`cd android && gradlew assembleDebug`（macOS/Linux 用 `./gradlew`；已带 wrapper，首次运行自动下载 Gradle 8.0.1）→ `app/build/outputs/apk/debug/`
-- 不想自己构建：直接从 [Releases](https://github.com/magalovania/ncm-cs11/releases) 下载最新 Android 4.4 兼容版（debug 签名）
+- 不想自己构建：直接下载 [v1.2.1 标准无反馈版](https://github.com/magalovania/ncm-cs11/releases/tag/v1.2.1)（debug 签名）
 - 核心类：
   - `MainActivity` / `LocalContentWebViewClient` — 全屏 WebView 壳；服务器地址持久化，并在服务器 origin 下拦截加载 APK 内置页面资源
   - `MusicService` — Android 5.0+ 使用 MediaSession，Android 4.4 使用 RemoteControlClient；两者均配合常驻前台通知接管方控与仪表盘显示
@@ -82,6 +82,7 @@ node server/gateway.js             # → :8080
 - **流量友好**：音频直连网易云 CDN，VPS 只出页面与 JSON，1G/月流量用不完
 - **歌词归一化**：网易云歌词用弯引号/全角撇号（U+2019/FF07），渲染时替换回 ASCII
 - **真车截图调试**：仅 feedback 构建开放；还需 VPS 显式设置 `DEBUG_UPLOAD_ENABLED=true`。标准 APK 默认关闭截图反馈，详见 [`server/DEPLOY.md`](server/DEPLOY.md#车机截图调试)
+- **历史反馈版已撤下**：v1.1.8、v1.1.9、v1.2.0 的 APK 资产已删除；这些 Release 页面只保留变更记录和安全通知
 
 ## 注意
 
