@@ -47,21 +47,21 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
 
 /* ---------- player bar ---------- */
 #player-bar{position:fixed; left:108px; right:0; bottom:20px; height:92px; z-index:40;
-  background:rgba(20,20,26,.96); border-top:1px solid #2a2a33; padding:0 22px}
-#player-bar:not([hidden]){display:flex}
+  background:rgba(20,20,26,.96); border-top:1px solid #2a2a33}
+#player-bar:not([hidden]){display:block}
 #pb-bar{position:absolute; left:0; top:0; right:0; height:3px; background:#2a2a33}
 #pb-fill{display:block; height:100%; width:0; background:#ec4141; transition:width .2s linear}
-#player-bar img{width:64px; height:64px; border-radius:12px; object-fit:cover; flex:none; background:#26262f}
-#pb-info{flex:1; min-width:0}
-#pb-title{font-size:19px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-#pb-artist{color:#8b8b97; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-#pb-progress{color:#5d5d68; font-size:15px; font-variant-numeric:tabular-nums; white-space:nowrap}
+#player-bar img{position:absolute; left:22px; top:14px; width:64px; height:64px; border-radius:12px; object-fit:cover; background:#26262f}
+#pb-info{position:absolute; left:104px; right:390px; top:50%; transform:translateY(-50%); min-width:0}
+#pb-title{font-size:19px; font-weight:600; line-height:26px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+#pb-artist{color:#8b8b97; font-size:16px; line-height:22px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+#pb-progress{position:absolute; right:260px; top:50%; transform:translateY(-50%); color:#5d5d68; font-size:15px; font-variant-numeric:tabular-nums; white-space:nowrap}
 .ctrl{width:60px; height:60px; border-radius:50%; background:#26262f; color:#f2f2f5;
   display:inline-block; vertical-align:middle; transition:.12s}
 .ctrl:active{background:#ec4141; color:#fff; transform:scale(.94)}
 .ctrl.big{width:64px; height:64px}
 .ctrl svg{display:block; width:50%; height:50%; margin:auto; fill:currentColor}
-.pb-controls{width:216px; flex:none; text-align:center; white-space:nowrap}
+.pb-controls{position:absolute; width:216px; height:60px; right:22px; top:16px; text-align:center; white-space:nowrap}
 .pb-controls .ctrl+.ctrl{margin-left:18px}
 .btn{height:56px; border-radius:14px; background:#26262f; color:#f2f2f5; padding:0 22px; font-size:18px;
   display:inline-flex; align-items:center; justify-content:center; gap:10px; transition:.12s}
@@ -117,10 +117,7 @@ button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
   .grid{display:block}
   .card{display:inline-block; vertical-align:top; width:170px; margin:0 18px 18px 0}
   .card img{height:170px}
-  #player-bar:not([hidden]){display:block; padding-top:14px; white-space:nowrap}
-  #player-bar>*{display:inline-block; vertical-align:middle; margin-right:14px}
-  #pb-info{width:35%}
-  .pb-controls{display:inline-block; white-space:nowrap}
+  #player-bar:not([hidden]){display:block}
   .pb-controls>*{display:inline-block; vertical-align:middle}
   .pb-controls .ctrl+.ctrl{margin-left:18px}
   .np-left,.np-right{display:inline-block; vertical-align:top}
@@ -136,10 +133,7 @@ html.legacy-webview #content{position:absolute; left:124px; right:0; top:0; bott
 html.legacy-webview .nav-logo{display:block; margin:0 24px 10px}
 html.legacy-webview .nav-btn{display:block; margin:10px 8px}
 html.legacy-webview .nav-login{position:absolute; left:32px; bottom:20px}
-html.legacy-webview #player-bar:not([hidden]){display:block; padding-top:14px; white-space:nowrap}
-html.legacy-webview #player-bar>*{display:inline-block; vertical-align:middle; margin-right:14px}
-html.legacy-webview #pb-info{width:35%}
-html.legacy-webview .pb-controls{display:inline-block; white-space:nowrap}
+html.legacy-webview #player-bar:not([hidden]){display:block}
 html.legacy-webview .pb-controls>*{display:inline-block; vertical-align:middle}
 html.legacy-webview .pb-controls .ctrl+.ctrl{margin-left:18px}
 html.legacy-webview .np-view{display:block; position:relative}

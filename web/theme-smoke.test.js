@@ -21,8 +21,10 @@ requireMatch(app, /getElementById\('player-bar'\)\.style\.bottom = safe/, 'legac
 requireMatch(app, /localStorage\.getItem\('ncm_zoom'\) \|\| '1'/, '100% default zoom missing')
 requireMatch(app, /box\.scrollTop = Math\.max\(0, target\)/, 'isolated centered lyric scrolling missing')
 requireMatch(css, /\.card\{display:inline-block;[^}]*width:170px;/, 'fixed playlist card width missing')
-requireMatch(css, /\.pb-controls\{width:216px;[^}]*text-align:center;/, 'bottom playback controls are not centered')
+requireMatch(css, /\.pb-controls\{position:absolute;[^}]*width:216px;[^}]*text-align:center;/, 'bottom playback controls are not centered')
 requireMatch(css, /\.np-controls\{[^}]*text-align:center;/, 'now-playing controls are not centered')
+requireMatch(css, /#pb-info\{position:absolute;[^}]*top:50%;[^}]*translateY\(-50%\)/, 'bottom track text is not vertically centered')
+requireMatch(css, /#pb-progress\{position:absolute;[^}]*top:50%;[^}]*translateY\(-50%\)/, 'bottom progress text is not vertically centered')
 if (/Math\.(?:min|max)\([^\n]*ncm_zoom/.test(app)) throw new Error('zoom controls must not impose a range limit')
 
 console.log('Android 4.4 theme smoke test passed')
