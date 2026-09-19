@@ -18,7 +18,7 @@ requireMatch(css, /html,body\{[^}]*background:#0e0e12;[^}]*color:#f2f2f5;/, 'dar
 requireMatch(css, /\.nav-btn\.active\{[^}]*color:#ec4141;/, 'red navigation accent missing')
 requireMatch(css, /#pb-fill\{[^}]*background:#ec4141;/, 'red progress accent missing')
 requireMatch(app, /getElementById\('player-bar'\)\.style\.bottom = safe/, 'legacy safe-bottom fallback missing')
-requireMatch(app, /localStorage\.getItem\('ncm_zoom'\) \|\| '1\.5'/, '150% default zoom missing')
+requireMatch(app, /localStorage\.getItem\('ncm_zoom'\) \|\| '1'/, '100% default zoom missing')
 requireMatch(app, /box\.scrollTop = Math\.max\(0, target\)/, 'isolated centered lyric scrolling missing')
 requireMatch(css, /\.card\{display:inline-block;[^}]*width:170px;/, 'fixed playlist card width missing')
 requireMatch(css, /\.pb-controls\{width:216px;[^}]*text-align:center;/, 'bottom playback controls are not centered')
