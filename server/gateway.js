@@ -18,6 +18,7 @@ const API_PORT = Number(process.env.API_PORT) || 3000
 const API_HOST = process.env.API_HOST || '127.0.0.1'
 const PORT = Number(process.env.PORT) || 8080
 const GATE_KEY = process.env.GATE_KEY || ''
+const DEBUG_UPLOAD_ENABLED = process.env.DEBUG_UPLOAD_ENABLED === 'true'
 const DEBUG_ROOT = path.resolve(process.env.DEBUG_ROOT || path.join(__dirname, 'debug-screenshots'))
 const MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024
 const SCREENSHOT_VIEWS = new Set(['nowplaying', 'playlists', 'fm', 'search', 'login', 'settings'])
@@ -249,7 +250,13 @@ function serveStatic(req, res) {
 
 http.createServer((req, res) => {
   if (!gateOk(req)) return gateDeny(req, res)
-  if (req.url.startsWith('/debug/screenshot')) return saveDebugScreenshot(req, res)
+  if (req.url.startsWith('/debug/screenshot')) {
+    if (!DEBUG_UPLOAD_ENABLED) {
+      res.writeHead(404, { 'content-type': 'application/json;charset=utf-8', 'cache-control': 'no-store' })
+      return res.end('{"ok":false,"error":"not found"}')
+    }
+    return saveDebugScreenshot(req, res)
+  }
   if (req.url.startsWith('/api/')) return proxy(req, res)
   return serveStatic(req, res)
 }).listen(PORT, '0.0.0.0', () => {

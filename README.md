@@ -31,7 +31,7 @@
 - FM 推荐页：私人 FM 固定在第一张，后接随机歌单并支持换一换
 - 当前播放全屏页：大封面 + 歌词 + 播放队列（YesPlayMusic 风格暗色 UI）
 - 车机适配：100% 默认缩放、无上下限缩放调节、底部安全留白、大触控目标
-- Debug 模式：每个页面可截图并压缩上传 VPS，便于远程排查真车布局
+- 可选反馈版：单独构建 feedback APK 后可截图并压缩上传 VPS；公开标准版不包含可用的截图反馈入口
 - APK 原生能力：服务器地址可改、MediaSession/RemoteControlClient 接管方控与仪表盘显示、常驻通知
 
 ## 快速开始（本地）
@@ -81,7 +81,7 @@ node server/gateway.js             # → :8080
 - **缓存破坏戳**：API 的 GET 缓存 2 分钟，前端所有请求带 `_t` 时间戳（QR 登录尤其必须，否则拿到旧 key 扫不出）
 - **流量友好**：音频直连网易云 CDN，VPS 只出页面与 JSON，1G/月流量用不完
 - **歌词归一化**：网易云歌词用弯引号/全角撇号（U+2019/FF07），渲染时替换回 ASCII
-- **真车截图调试**：设置页开启 Debug 模式后，可在每个页面上传截图；APK 将图片压到不超过 1280×720 并以 JPEG 72% 质量发送，详见 [`server/DEPLOY.md`](server/DEPLOY.md#车机截图调试)
+- **真车截图调试**：仅 feedback 构建开放；还需 VPS 显式设置 `DEBUG_UPLOAD_ENABLED=true`。标准 APK 默认关闭截图反馈，详见 [`server/DEPLOY.md`](server/DEPLOY.md#车机截图调试)
 
 ## 注意
 

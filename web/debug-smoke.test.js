@@ -13,7 +13,8 @@ if (html.indexOf('id="debug-shot"') < 0 || style.indexOf('#debug-shot') < 0) {
   throw new Error('debug screenshot button missing')
 }
 
-if (app.indexOf("localStorage.getItem('ncm_debug_on') === '1'") < 0
+if (app.indexOf('supportsScreenshotFeedback') < 0
+  || app.indexOf("localStorage.getItem('ncm_debug_on') === '1'") < 0
   || app.indexOf('window.Android.captureScreenshot') < 0
   || app.indexOf('function captureDebugScreenshot()') < 0) {
   throw new Error('debug mode or screenshot bridge missing')
@@ -29,6 +30,10 @@ if (activity.indexOf('Bitmap.CompressFormat.JPEG') < 0
   || activity.indexOf('DEBUG_SCREENSHOT_MAX_WIDTH = 1280') < 0
   || activity.indexOf('DEBUG_SCREENSHOT_MAX_HEIGHT = 720') < 0) {
   throw new Error('native screenshot compression settings missing')
+}
+
+if (activity.indexOf('BuildConfig.SCREENSHOT_FEEDBACK_ENABLED') < 0) {
+  throw new Error('native screenshot feature gate missing')
 }
 
 if (gateway.indexOf("contentType !== 'image/jpeg'") < 0 || gateway.indexOf("base + '.jpg'") < 0) {

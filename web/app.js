@@ -35,10 +35,14 @@ var App = (function () {
     document.documentElement.style.zoom = String(z)
   }
 
-  function debugEnabled() { return localStorage.getItem('ncm_debug_on') === '1' }
+  function screenshotFeedbackAvailable() {
+    if (!window.Android || !window.Android.captureScreenshot || !window.Android.supportsScreenshotFeedback) return false
+    try { return window.Android.supportsScreenshotFeedback() } catch (error) { return false }
+  }
+  function debugEnabled() { return screenshotFeedbackAvailable() && localStorage.getItem('ncm_debug_on') === '1' }
   function applyDebugMode() {
     var button = document.getElementById('debug-shot')
-    button.hidden = !(debugEnabled() && window.Android && window.Android.captureScreenshot)
+    button.hidden = !debugEnabled()
   }
 
   function captureDebugScreenshot() {
@@ -620,13 +624,15 @@ var App = (function () {
     function renderZoom() { document.getElementById('zoom-val').textContent = Math.round(parseFloat(localStorage.getItem('ncm_zoom') || '1') * 100) + '%' }
     document.getElementById('zoom-minus').onclick = function () { localStorage.setItem('ncm_zoom', (parseFloat(localStorage.getItem('ncm_zoom') || '1') - 0.1).toFixed(2)); applyZoom(); renderZoom() }
     document.getElementById('zoom-plus').onclick = function () { localStorage.setItem('ncm_zoom', (parseFloat(localStorage.getItem('ncm_zoom') || '1') + 0.1).toFixed(2)); applyZoom(); renderZoom() }
-    var debugOn = debugEnabled()
-    var debugRow = el('<div class="set-row"><div><div>Debug 模式</div><div class="muted">在每个页面显示截图上传按钮</div></div><button id="debug-toggle" class="btn">' + (debugOn ? '已开' : '已关') + '</button></div>')
-    c.appendChild(debugRow)
-    document.getElementById('debug-toggle').onclick = function () {
-      localStorage.setItem('ncm_debug_on', debugEnabled() ? '0' : '1')
-      this.textContent = debugEnabled() ? '已开' : '已关'
-      applyDebugMode()
+    if (screenshotFeedbackAvailable()) {
+      var debugOn = debugEnabled()
+      var debugRow = el('<div class="set-row"><div><div>Debug 模式</div><div class="muted">在每个页面显示截图上传按钮</div></div><button id="debug-toggle" class="btn">' + (debugOn ? '已开' : '已关') + '</button></div>')
+      c.appendChild(debugRow)
+      document.getElementById('debug-toggle').onclick = function () {
+        localStorage.setItem('ncm_debug_on', debugEnabled() ? '0' : '1')
+        this.textContent = debugEnabled() ? '已开' : '已关'
+        applyDebugMode()
+      }
     }
     var acct = el('<div class="set-row"><div class="acct"><img src=""></div>' +
       '<div><div id="set-name"></div><div id="set-uid" class="muted"></div></div>' +

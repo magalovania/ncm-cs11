@@ -12,6 +12,7 @@ android {
     targetSdk 34
     versionCode 12
     versionName "1.2.1"
+    buildConfigField "boolean", "SCREENSHOT_FEEDBACK_ENABLED", "false"
   }
 
   sourceSets {
@@ -25,9 +26,18 @@ android {
     debug {
       minifyEnabled false
     }
+    feedback {
+      initWith debug
+      matchingFallbacks = ['debug']
+      buildConfigField "boolean", "SCREENSHOT_FEEDBACK_ENABLED", "true"
+    }
     release {
       minifyEnabled false
     }
+  }
+
+  buildFeatures {
+    buildConfig true
   }
 
   compileOptions {

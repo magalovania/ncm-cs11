@@ -39,11 +39,22 @@
 
 ## 车机截图调试
 
-1. APK 设置页开启「Debug 模式」。
-2. 各页面右上角会显示「截图」按钮；点击后由原生 WebView 截图并上传到当前网关。
-3. Docker 部署的截图保存在服务器仓库的 `server/debug-screenshots/`，每次上传生成同名 `.jpg` 和 `.json` 元数据文件。
-4. APK 会先把长边压到不超过 1280×720，再以 JPEG 72% 质量上传；网关限制为 JPEG 且单张不超过 2MB。
-5. 截图上传沿用 `GATE_KEY` 鉴权；该目录应保持私有，不要公开托管。
+截图调试是可选能力，默认关闭：
+
+1. 使用 feedback 变体构建 APK：`cd android && gradlew assembleFeedback`。
+2. VPS `server/.env` 增加 `DEBUG_UPLOAD_ENABLED=true`，再重建 Web 容器。
+3. APK 设置页开启「Debug 模式」。
+4. 各页面右上角会显示「截图」按钮；点击后由原生 WebView 截图并上传到当前网关。
+5. Docker 部署的截图保存在服务器仓库的 `server/debug-screenshots/`，每次上传生成同名 `.jpg` 和 `.json` 元数据文件。
+6. APK 会先把长边压到不超过 1280×720，再以 JPEG 72% 质量上传；网关限制为 JPEG 且单张不超过 2MB。
+7. 截图上传沿用 `GATE_KEY` 鉴权；该目录应保持私有，不要公开托管。
+
+构建产物：
+
+- 标准无反馈版：`android/app/build/outputs/apk/debug/app-debug.apk`
+- 私有反馈版：`android/app/build/outputs/apk/feedback/app-feedback.apk`
+
+公开发布建议使用标准 `assembleDebug`/`assembleRelease` 产物：其中不显示 Debug 模式入口，原生截图接口也会拒绝执行。即使有人自行构造请求，VPS 未设置 `DEBUG_UPLOAD_ENABLED=true` 时截图端点也返回 404。
 
 检查最近上传的文件：
 

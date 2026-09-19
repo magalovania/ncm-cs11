@@ -77,6 +77,7 @@ upstream.listen(apiPort, '127.0.0.1', function () {
       API_PORT: String(apiPort),
       API_HOST: '127.0.0.1',
       GATE_KEY: 'test-gate',
+      DEBUG_UPLOAD_ENABLED: 'true',
       DEBUG_ROOT: debugRoot
     }),
     stdio: 'ignore'
@@ -107,7 +108,7 @@ upstream.listen(apiPort, '127.0.0.1', function () {
     return post('/debug/screenshot?gate_key=test-gate&view=fm', Buffer.from('not jpeg'), { 'content-type': 'image/jpeg' })
   }).then(function (response) {
     assert.strictEqual(response.status, 400)
-    console.log('gateway tests passed')
+console.log('gateway tests passed')
   }).catch(function (error) {
     console.error(error.stack || error)
     process.exitCode = 1

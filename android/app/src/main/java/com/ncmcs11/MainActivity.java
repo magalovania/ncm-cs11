@@ -216,6 +216,7 @@ public class MainActivity extends Activity {
   }
 
   void captureScreenshot(final String viewName, final String zoom) {
+    if (!BuildConfig.SCREENSHOT_FEEDBACK_ENABLED) return;
     if (screenshotUploading) {
       Toast.makeText(this, "截图正在上传", Toast.LENGTH_SHORT).show();
       return;

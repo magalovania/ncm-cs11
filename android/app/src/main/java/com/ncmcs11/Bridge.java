@@ -57,5 +57,10 @@ public class Bridge {
   }
 
   @JavascriptInterface
+  public boolean supportsScreenshotFeedback() {
+    return BuildConfig.SCREENSHOT_FEEDBACK_ENABLED;
+  }
+
+  @JavascriptInterface
   public void log(String msg) { Log.d(TAG, "web: " + msg); }
 }
