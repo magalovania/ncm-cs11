@@ -45,6 +45,31 @@
 4. APK 会先把长边压到不超过 1280×720，再以 JPEG 72% 质量上传；网关限制为 JPEG 且单张不超过 2MB。
 5. 截图上传沿用 `GATE_KEY` 鉴权；该目录应保持私有，不要公开托管。
 
+检查最近上传的文件：
+
+```bash
+cd ~/ncm-cs11/server
+find debug-screenshots -maxdepth 1 -type f -printf '%T@ %f %s bytes\n' \
+  | sort -nr | head
+```
+
+下载最新截图到本机查看：
+
+```bash
+gcloud compute ssh <实例名> --zone <区域> \
+  --command "cd ~/ncm-cs11/server && find debug-screenshots -type f -name '*.jpg' -printf '%T@ %f\n' | sort -nr | head -1"
+gcloud compute scp <实例名>:~/ncm-cs11/server/debug-screenshots/<文件名>.jpg . --zone <区域>
+```
+
+若车机提示“截图上传失败”，依次检查：
+
+1. VPS 是否已部署 v1.1.9 对应网关：`grep -n 'image/jpeg' ~/ncm-cs11/server/gateway.js`。
+2. Web 容器是否已重建：`cd ~/ncm-cs11/server && sudo docker compose up -d --build web`。
+3. `server/debug-screenshots/` 是否存在且 Docker 可写；Compose 会自动挂载该目录。
+4. APK 中的后端地址与访问口令是否和 VPS 当前 `GATE_KEY` 一致。
+
+已验证样例：真机 `JAD-AL50`、Android 12、页面 `settings`、缩放 70%、原始尺寸 2597×1118，压缩后 JPEG 约 29KB，公网上传成功。
+
 ## 460 cheating（海外部署必看）
 网易对「非中国大陆 IP」的请求返回 `460 cheating`。本地（国内 IP）没事；**部署到 GCP 美区 / 港 VPS 必撞**，取歌登录全挂。
 解法：docker-compose 已给 api 开 `ENABLE_RANDOM_CN_IP=true`，自动给每个请求套随机国内 IP（设 `X-Real-IP`），网易当作国内放行。无需手动传 `?realIP=`。
