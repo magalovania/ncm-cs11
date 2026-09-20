@@ -38,7 +38,9 @@ const MIME = {
 // ---------- access gate ----------
 function gateKey(req) {
   const ck = /(?:^|;\s*)ncm_gate=([^;]*)/.exec(req.headers.cookie || '')
+  const header = req.headers['x-gate-key']
   const query = /[?&]gate_key=([^&]*)/.exec(req.url || '')
+  if (header) return String(header)
   if (query) return decodeURIComponent(query[1])
   if (ck) return decodeURIComponent(ck[1])
   if (!/^\/api\//.test(req.url || '')) {

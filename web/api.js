@@ -31,28 +31,19 @@ var API = (function () {
   function getCookie() { return store('ncm_cookie') || '' }
   function setCookie(c) { store('ncm_cookie', c || '') }
 
-  // The APK stores GATE_KEY separately so it cannot collide with QR endpoints' `key`.
-  // Browser clients authenticate with the ncm_gate cookie set by the password page.
   ;(function () {
     var legacy = /[?&]key=([^&]+)/.exec(location.search)
     if (legacy) store('ncm_gate_key', decodeURIComponent(legacy[1]))
   })()
-  function getKey() {
-    if (window.Android && window.Android.getGateKey) {
-      try { return window.Android.getGateKey() || '' } catch (e) {}
-    }
-    return store('ncm_gate_key') || ''
-  }
+  function getKey() { return store('ncm_gate_key') || '' }
 
-  function call(endpoint, params) {
+  function call(endpoint, params, retried) {
     return new Promise(function (resolve, reject) {
       var parts = []
       var p = params || {}
       p._t = String(Date.now())   // cache-buster: API caches GET for 2min; QR login must not get a stale key
       var ck = getCookie()
       if (ck) p.cookie = ck
-      var gk = getKey()
-      if (gk) p.gate_key = gk    // separate from QR endpoints' own `key` parameter
       Object.keys(p).forEach(function (k) {
         if (p[k] === undefined || p[k] === null || p[k] === '') return
         parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(p[k]))
@@ -61,7 +52,14 @@ var API = (function () {
       var xhr = new XMLHttpRequest()
       xhr.open('GET', url, true)
       xhr.timeout = 20000
+      var gk = getKey()
+      if (gk) xhr.setRequestHeader('X-Gate-Key', gk)
       xhr.onload = function () {
+        if (xhr.status === 403 && !retried && window.Android && window.Android.resyncGateCookie) {
+          try { window.Android.resyncGateCookie() } catch (e) {}
+          call(endpoint, params, true).then(resolve, reject)
+          return
+        }
         try { resolve(JSON.parse(xhr.responseText)) }
         catch (e) { reject(new Error('解析失败: ' + xhr.responseText.slice(0, 120))) }
       }

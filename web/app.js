@@ -588,17 +588,19 @@ var App = (function () {
     var c = document.getElementById('content'); empty(c)
     c.appendChild(el('<h2>设置</h2>'))
     var serverLabel = location.origin
-    var gateLabel = ''
+    var gateSet = false
     if (window.Android && window.Android.getServer) {
       try { serverLabel = window.Android.getServer() } catch (e) {}
     }
-    if (window.Android && window.Android.getGateKey) {
-      try { gateLabel = window.Android.getGateKey() } catch (e) {}
+    if (window.Android && window.Android.hasGateKey) {
+      try { gateSet = !!window.Android.hasGateKey() } catch (e) {}
+    } else {
+      gateSet = /(?:^|;\s*)ncm_gate=[^;]+/.test(document.cookie || '')
     }
     var srvRow = el('<div class="set-row"><div>服务器地址</div><div class="server-value"></div></div>')
     srvRow.lastChild.textContent = serverLabel
     c.appendChild(srvRow)
-    c.appendChild(el('<div class="set-row"><div>访问口令</div><div class="server-value">' + (gateLabel ? '已设置' : '未设置') + '</div></div>'))
+    c.appendChild(el('<div class="set-row"><div>访问口令</div><div class="server-value">' + (gateSet ? '已设置' : '未设置') + '</div></div>'))
     var srvBtn = el('<button class="btn" style="margin:0 0 16px">修改服务器地址</button>')
     c.appendChild(srvBtn)
     srvBtn.onclick = function () { if (window.Android && window.Android.openServerDialog) window.Android.openServerDialog() }

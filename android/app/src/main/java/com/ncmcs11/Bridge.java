@@ -30,8 +30,13 @@ public class Bridge {
   }
 
   @JavascriptInterface
-  public String getGateKey() {
-    return activity.currentGateKey();
+  public boolean hasGateKey() {
+    return !activity.currentGateKey().isEmpty();
+  }
+
+  @JavascriptInterface
+  public void resyncGateCookie() {
+    activity.runOnUiThread(new Runnable() { @Override public void run() { activity.syncGateCookie(); } });
   }
 
   @JavascriptInterface

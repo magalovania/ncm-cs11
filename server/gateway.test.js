@@ -90,6 +90,9 @@ upstream.listen(apiPort, '127.0.0.1', function () {
     assert.strictEqual(upstreamRequests[upstreamRequests.length - 1].url, '/login/qr/create?key=qr-key')
     assert.strictEqual(upstreamRequests[upstreamRequests.length - 1].cookie, '')
     assert.strictEqual(response.headers['transfer-encoding'], undefined)
+    return request('/api/ping', { 'x-gate-key': 'test-gate' })
+  }).then(function (response) {
+    assert.strictEqual(response.status, 200)
     return request('/api/login/qr/key')
   }).then(function (response) {
     assert.strictEqual(response.status, 403)

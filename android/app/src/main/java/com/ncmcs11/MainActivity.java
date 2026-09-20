@@ -83,7 +83,7 @@ public class MainActivity extends Activity {
   }
 
   @SuppressWarnings("deprecation")
-  private void syncGateCookie() {
+  void syncGateCookie() {
     Uri server = Uri.parse(currentUrl());
     if (server.getScheme() == null || server.getAuthority() == null) return;
     CookieSyncManager.createInstance(this);
@@ -267,7 +267,6 @@ public class MainActivity extends Activity {
       Uri endpoint = server.buildUpon()
         .path("/debug/screenshot")
         .clearQuery()
-        .appendQueryParameter("gate_key", currentGateKey())
         .appendQueryParameter("view", safeMeta(viewName))
         .appendQueryParameter("zoom", safeMeta(zoom))
         .appendQueryParameter("width", String.valueOf(width))
@@ -283,6 +282,9 @@ public class MainActivity extends Activity {
       connection.setDoOutput(true);
       connection.setFixedLengthStreamingMode(jpeg.length);
       connection.setRequestProperty("Content-Type", "image/jpeg");
+      if (!currentGateKey().isEmpty()) {
+        connection.setRequestProperty("Cookie", "ncm_gate=" + Uri.encode(currentGateKey()));
+      }
       OutputStream output = connection.getOutputStream();
       output.write(jpeg);
       output.close();
