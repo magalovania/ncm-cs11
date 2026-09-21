@@ -413,9 +413,45 @@ var App = (function () {
     urlCache[nt.id] = { pending: true, ts: Date.now() }
     API.songUrl(nt.id, state.quality).then(function (r) {
       var d = r.data && r.data[0]
-      if (d && d.url) urlCache[nt.id] = { url: d.url, q: state.quality, ts: Date.now() }
+      if (d && d.url) {
+        urlCache[nt.id] = { url: d.url, q: state.quality, ts: Date.now() }
+        preloadNextAudio(d.url, nt.id, state.quality)   // 整首提前下到 WebView 缓存，切歌秒开
+      }
       else urlCache[nt.id] = { dead: true, q: state.quality, ts: Date.now() }   // 无版权/VIP：短缓存，连跳免等
     }).catch(function () { delete urlCache[nt.id] })
+  }
+
+  // ---------- next-track AUDIO preloading ----------
+  // URL prefetch only kills the API round trip; on slow 4G the song still buffers at switch.
+  // A hidden <audio preload="auto"> downloads the whole next file into the WebView HTTP cache
+  // while the current one plays; the main element then reads the same URL from local cache.
+  // Cache hit = instant start; cache miss = same as before (no downside).
+  var preloader = null
+  var preloaded = null   // {url, id, q}
+  function ensurePreloader() {
+    if (preloader) return preloader
+    preloader = document.createElement('audio')
+    preloader.preload = 'auto'
+    preloader.style.display = 'none'
+    document.body.appendChild(preloader)
+    return preloader
+  }
+  function preloadNextAudio(url, id, q) {
+    if (preloaded && preloaded.url === url) return
+    preloaded = { url: url, id: id, q: q }
+    var pre = ensurePreloader()
+    pre.pause()
+    pre.src = url
+    pre.load()
+  }
+  function dropPreloadedAudio() {
+    if (!preloader) return
+    preloaded = null
+    try {
+      preloader.pause()
+      preloader.removeAttribute('src')
+      preloader.load()   // abort any in-flight download
+    } catch (e) {}
   }
 
   function playTrack(t) {
@@ -431,7 +467,9 @@ var App = (function () {
 
   function startTrack(t, e) {
     urlCache[t.id] = e          // remember (prev/replay reuse it within TTL)
+    recoverCount = 0            // fresh track: reset the error-recovery budget
     if (!e.url) { next(); return }  // 无版权/VIP，跳下一首（解灰已由后端尝试）
+    lastPos = 0
     audio.src = e.url
     var playResult = audio.play()
     if (playResult && playResult.catch) playResult.catch(function () {})
@@ -440,6 +478,52 @@ var App = (function () {
     if (state.view === 'nowplaying') renderNowPlaying()   // 切歌时刷新当前播放视图（标题/封面/歌词）
     if (!trackPic(t)) ensureCover(t)   // 搜索/FM 等接口不带封面，按需补取
     prefetchNextUrl()           // warm the next track while this one plays
+  }
+
+  // ---------- audio error self-healing + buffering indicator ----------
+  // Song URLs expire (~20min). A long pause or a mid-song network drop used to leave the
+  // player dead-silent with no retry. On error: refetch a fresh URL, restore the position,
+  // keep playing. 'waiting' shows 缓冲… in the time slot; timeupdate restores it naturally.
+  var recoverCount = 0
+  var lastPos = 0
+  function bindAudioHealth() {
+    audio.addEventListener('error', function () {
+      var t = cur()
+      if (!t || !t.id || recoverCount >= 2) {
+        document.getElementById('pb-cur').textContent = '播放失败'
+        return
+      }
+      recoverCount++
+      var resumeAt = lastPos
+      document.getElementById('pb-cur').textContent = '重连中…'
+      delete urlCache[t.id]   // force a fresh URL (the old one expired / broke)
+      API.songUrl(t.id, state.quality).then(function (r) {
+        var d = r.data && r.data[0]
+        if (!d || !d.url) throw new Error('no url')
+        urlCache[t.id] = { url: d.url, q: state.quality, ts: Date.now() }
+        audio.src = d.url
+        audio.addEventListener('loadedmetadata', function restore() {
+          audio.removeEventListener('loadedmetadata', restore)
+          try { if (resumeAt > 0 && resumeAt < (audio.duration || 0)) audio.currentTime = resumeAt } catch (e) {}
+          var pr = audio.play()
+          if (pr && pr.catch) pr.catch(function () {})
+        })
+        var pr2 = audio.play()   // some old WebViews only fire loadedmetadata after play()
+        if (pr2 && pr2.catch) pr2.catch(function () {})
+      }).catch(function () {
+        document.getElementById('pb-cur').textContent = '播放失败'
+      })
+    })
+    audio.addEventListener('waiting', function () {
+      document.getElementById('pb-cur').textContent = '缓冲…'
+    })
+    audio.addEventListener('stalled', function () {
+      document.getElementById('pb-cur').textContent = '缓冲…'
+    })
+    audio.addEventListener('playing', function () {
+      document.getElementById('pb-cur').textContent = fmt(audio.currentTime)
+    })
+    audio.addEventListener('ended', function () { recoverCount = 0 })
   }
 
   function cur() { return state.index >= 0 ? state.queue[state.index] : null }
@@ -523,6 +607,7 @@ var App = (function () {
 
   // ---------- bindings ----------
   function bind() {
+    bindAudioHealth()
     eachNode(document.querySelectorAll('.nav-btn'), function (b) {
       b.onclick = function () { go(b.getAttribute('data-view')) }
     })
@@ -546,6 +631,7 @@ var App = (function () {
     })
     audio.addEventListener('ended', next)
     audio.addEventListener('timeupdate', function () {
+      lastPos = audio.currentTime
       var cur = fmt(audio.currentTime), dur = fmt(audio.duration)
       document.getElementById('pb-cur').textContent = cur
       document.getElementById('pb-dur').textContent = dur
@@ -610,7 +696,7 @@ var App = (function () {
       '<option value="hires">Hi-Res (VIP)</option></select></div>')
     c.appendChild(qRow)
     var sel = document.getElementById('q-sel'); sel.value = state.quality
-    sel.onchange = function () { state.quality = sel.value; localStorage.setItem('ncm_quality', sel.value) }
+    sel.onchange = function () { state.quality = sel.value; localStorage.setItem('ncm_quality', sel.value); dropPreloadedAudio() }
     var safeOn = localStorage.getItem('ncm_safe_bottom_on') !== '0'
     var safeCur = parseInt(localStorage.getItem('ncm_safe_bottom') || '20', 10)
     var safeRow = el('<div class="set-row" style="flex-direction:column;align-items:stretch;gap:12px"><div style="display:flex;align-items:center;justify-content:space-between"><div>底部留白 <span class="muted">避开车机底栏</span></div><button id="safe-toggle" class="btn">' + (safeOn ? '已开' : '已关') + '</button></div><div id="safe-adj" style="display:flex;align-items:center;gap:12px"><button id="safe-minus" class="btn">-10</button><span id="safe-val" style="min-width:54px;text-align:center">' + safeCur + ' px</span><button id="safe-plus" class="btn">+10</button></div></div>')
