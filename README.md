@@ -2,7 +2,7 @@
 
 为领克 CS11 老款安卓车机（32 位 ARM，Android 4.4+）自建的网易云音乐客户端。
 
-车机太老、装不了官方 App，于是自搭一套：**约 92KB 的 WebView 壳 APK** 内置 UI，
+车机太老、装不了官方 App，于是自搭一套：**约 89KB 的 WebView 壳 APK** 内置 UI，
 音乐数据由一台车能访问的服务器提供，音频直连网易云 CDN，不经服务器。
 
 ## 架构
@@ -31,6 +31,7 @@
 - FM 推荐页：私人 FM 固定在第一张，后接随机歌单并支持换一换
 - 当前播放全屏页：大封面 + 歌词 + 播放队列（YesPlayMusic 风格暗色 UI）
 - 车机适配：100% 默认缩放、无上下限缩放调节、底部安全留白、大触控目标
+- Android 4.4 图标兼容：传统启动器使用全尺寸不透明红底，不再出现白色方框
 - 可选反馈版：单独构建 feedback APK 后可截图并压缩上传 VPS；公开标准版不包含可用的截图反馈入口
 - APK 原生能力：服务器地址可改、MediaSession/RemoteControlClient 接管方控与仪表盘显示、常驻通知
 
@@ -65,7 +66,7 @@ node server/gateway.js             # → :8080
 
 - 前置：JDK 17+ 与 Android SDK（`android/local.properties` 写 `sdk.dir=<SDK 路径>`，或设 `ANDROID_HOME` 环境变量）
 - 构建：`cd android && gradlew assembleDebug`（macOS/Linux 用 `./gradlew`；已带 wrapper，首次运行自动下载 Gradle 8.0.1）→ `app/build/outputs/apk/debug/`
-- 不想自己构建：直接下载 [v1.2.2 标准无反馈版](https://github.com/magalovania/ncm-cs11/releases/tag/v1.2.2)（debug 签名）
+- 不想自己构建：直接下载 [v1.2.3 标准无反馈版](https://github.com/magalovania/ncm-cs11/releases/tag/v1.2.3)（debug 签名）
 - 核心类：
   - `MainActivity` / `LocalContentWebViewClient` — 全屏 WebView 壳；服务器地址持久化，并在服务器 origin 下拦截加载 APK 内置页面资源
   - `MusicService` — Android 5.0+ 使用 MediaSession，Android 4.4 使用 RemoteControlClient；两者均配合常驻前台通知接管方控与仪表盘显示
