@@ -35,6 +35,7 @@ server/debug-screenshots/
 android/.gradle/
 android/build/
 android/app/build/
+android/settingslauncher/build/
 android/local.properties
 local.properties
 *.apk
