@@ -1,0 +1,35 @@
+plugins {
+  id 'com.android.application'
+}
+
+android {
+  namespace 'com.vibecoding.nativesettings'
+  compileSdk 34
+
+  defaultConfig {
+    applicationId 'com.vibecoding.nativesettings'
+    minSdk 19
+    targetSdk 19
+    versionCode 1
+    versionName '1.0.0'
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled false
+    }
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+
+  lint {
+    // This utility is sideloaded on an API 19 head unit, not published to Google Play.
+    disable 'ExpiredTargetSdkVersion'
+  }
+}
+
+dependencies {
+}

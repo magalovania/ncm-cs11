@@ -22,7 +22,8 @@
 |------|------|
 | `web/` | 移动优先播放器 Web UI。零框架、XHR + 原生 JS，兼容老车机 WebView |
 | `server/` | VPS 端：第三方 API（gitignore 不入库）+ 零依赖 Node 网关 + Docker 部署件 |
-| `android/` | 车机 APK：纯 Android framework，零外部依赖，minSdk 19 |
+| `android/` | 车机网易云与原生设置入口 APK：纯 Android framework，零外部依赖，minSdk 19 |
+| `extras/` | 可直接侧载到车机的辅助 APK |
 
 ## 功能
 
@@ -72,6 +73,16 @@ node server/gateway.js             # → :8080
   - `MusicService` — Android 5.0+ 使用 MediaSession，Android 4.4 使用 RemoteControlClient；两者均配合常驻前台通知接管方控与仪表盘显示
   - `MediaButtonReceiver` / `MediaSessionController` — 分别承接 Android 4.4 媒体按键和 Android 5.0+ 媒体会话
   - `Bridge` — 暴露 `window.Android`（setMedia/setPlaying/setServer 等），媒体键经 `window.__bridge.onMediaKey()` 回调进 Web
+
+### 原生设置入口 APK
+
+`android/settingslauncher/` 是独立安装的小工具，首次启动会显式打开 `com.android.settings/.Settings`；返回工具页后还可以直接进入 Wi-Fi、蓝牙、应用管理和开发者选项等系统子页面。
+
+- 直接下载：[native-settings-launcher-v1.0.0-android4.4.apk](extras/native-settings-launcher-v1.0.0-android4.4.apk?raw=1)
+- 构建：`cd android && gradlew :settingslauncher:assembleDebug`
+- 包名：`com.vibecoding.nativesettings`
+- 兼容：Android 4.4 / API 19、ARMv7；无原生 ABI 依赖
+- 限制：若厂商已删除或禁止系统设置 Activity，普通 APK 无法绕过系统权限限制
 
 ## 设计要点
 

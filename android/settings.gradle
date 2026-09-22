@@ -13,4 +13,4 @@ dependencyResolutionManagement {
   }
 }
 rootProject.name = "NCMcs11"
-include ':app'
+include ':app', ':settingslauncher'

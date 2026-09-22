@@ -39,6 +39,7 @@ android/local.properties
 local.properties
 *.apk
 *.aab
+!extras/native-settings-launcher-v1.0.0-android4.4.apk
 folder.ico
 icon_master.png
 # --- Public release: deploy artifact stays local ---

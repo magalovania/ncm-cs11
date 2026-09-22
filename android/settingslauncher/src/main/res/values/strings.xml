@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="app_name">原生设置入口</string>
+  <string name="title">原生设置入口</string>
+  <string name="description">首次打开会直接尝试进入 Android 原生设置。返回本页后，也可以分别打开系统子页面。</string>
+  <string name="ready">正在尝试打开系统设置…</string>
+  <string name="native_settings_opened">已请求打开 com.android.settings 原生首页</string>
+  <string name="standard_settings_opened">原生首页不可用，已改用系统设置入口</string>
+  <string name="page_opened">已请求打开系统子页面</string>
+  <string name="settings_unavailable">车机已删除或禁止系统设置入口</string>
+  <string name="page_unavailable">这个系统子页面已被车机删除或禁止</string>
+  <string name="open_native_settings">打开原生设置首页</string>
+  <string name="wireless_settings">无线和网络</string>
+  <string name="wifi_settings">Wi-Fi</string>
+  <string name="bluetooth_settings">蓝牙</string>
+  <string name="display_settings">显示</string>
+  <string name="sound_settings">声音</string>
+  <string name="app_settings">应用管理</string>
+  <string name="security_settings">安全</string>
+  <string name="language_settings">输入法</string>
+  <string name="date_settings">日期和时间</string>
+  <string name="accessibility_settings">辅助功能</string>
+  <string name="development_settings">开发者选项</string>
+</resources>
